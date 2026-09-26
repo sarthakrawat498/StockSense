@@ -25,6 +25,10 @@ export const API = {
     KPIS: "/api/dashboard",
   },
 
+  ALERTS: {
+    LOW_STOCK: "/api/alerts/low-stock",
+  },
+
   // ── Products ──────────────────────────────────────────────────────────────
   PRODUCTS: {
     BASE: "/api/products",

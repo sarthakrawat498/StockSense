@@ -1,2 +1,2 @@
 export { ReorderRuleService } from "./reorder-rule-service";
-export type { CreateReorderRuleParams, ReorderRuleFilters, ReorderRuleList, UpdateReorderRuleParams } from "./types";
+export type { CreateReorderRuleParams, ReorderRule, ReorderRuleFilters, ReorderRuleList, UpdateReorderRuleParams } from "./types";

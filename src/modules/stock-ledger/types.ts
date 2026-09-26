@@ -14,16 +14,16 @@ export interface StockMove {
   operationType: OperationType;
   reference: string;
   createdAt: string;
+  movedAt: string;
 }
 
 export interface StockMoveFilters {
   productId?: string;
   warehouseId?: string;
-  type?: StockMoveType;
+  locationId?: string;
   operationType?: OperationType;
-  reference?: string;
-  dateFrom?: string;
-  dateTo?: string;
+  fromDate?: string;
+  toDate?: string;
   page?: number;
   pageSize?: number;
 }
