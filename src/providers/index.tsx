@@ -1,2 +1,4 @@
 // TODO: Providers — composes QueryProvider + AuthProvider + Toaster
-export {};
+export function Providers({ children }: { children: React.ReactNode }) {
+  return <>{children}</>;
+}

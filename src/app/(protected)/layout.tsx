@@ -1,2 +1,4 @@
-// TODO: Protected layout — AppShell with Sidebar + Header. Redirects to /login if unauthenticated.
-export {};
+// TODO: Protected layout — AppShell with Sidebar + Header
+export default function ProtectedLayout({ children }: { children: React.ReactNode }) {
+  return <>{children}</>;
+}
