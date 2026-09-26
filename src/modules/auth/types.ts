@@ -1,30 +1,24 @@
-import type { Timestamps } from "@/types/common.types";
+import type { AuthUser, TokenPair } from "@/types/auth.types";
 import type { UserRole } from "@/types/common.types";
-
-// ─── Domain Types ─────────────────────────────────────────────────────────────
-
-export interface User extends Timestamps {
-  id: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  role: UserRole;
-  isActive: boolean;
-}
 
 // ─── Request / Response DTOs ──────────────────────────────────────────────────
 
 export interface SignupParams {
+  username: string;
   email: string;
   password: string;
-  firstName: string;
-  lastName: string;
   role?: UserRole;
+  warehouseId?: string | null;
 }
 
 export interface LoginParams {
-  email: string;
+  identifier: string; // username or email
   password: string;
+}
+
+export interface AuthResult {
+  user: AuthUser;
+  tokens: TokenPair;
 }
 
 export interface ResetPasswordRequestParams {
@@ -32,12 +26,7 @@ export interface ResetPasswordRequestParams {
 }
 
 export interface ResetPasswordConfirmParams {
-  token: string;
+  email: string;
+  otp: string;
   newPassword: string;
-}
-
-export interface AuthResult {
-  user: User;
-  accessToken: string;
-  refreshToken: string;
 }

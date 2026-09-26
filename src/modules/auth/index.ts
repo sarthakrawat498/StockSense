@@ -1,13 +1,6 @@
 /**
- * auth module public API.
- * Only import from here in other modules — never from internal/.
+ * Public API for the auth module.
+ * Other modules must only import from this file.
  */
-export { AuthService } from "./auth-service";
-export type {
-  User,
-  SignupParams,
-  LoginParams,
-  AuthResult,
-  ResetPasswordRequestParams,
-  ResetPasswordConfirmParams,
-} from "./types";
+export { authService } from "./auth-service";
+export * from "./types";

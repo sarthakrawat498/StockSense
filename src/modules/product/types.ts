@@ -1,4 +1,4 @@
-import type { Timestamps, OperationType } from "@/types/common.types";
+import type { Timestamps } from "@/types/common.types";
 
 // ─── Domain Types ─────────────────────────────────────────────────────────────
 

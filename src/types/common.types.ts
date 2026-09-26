@@ -4,7 +4,7 @@
  * importing from @prisma/client (which is server-only).
  */
 
-export type UserRole = "INVENTORY_MANAGER" | "WAREHOUSE_STAFF";
+export type UserRole = "MANAGER" | "STAFF";
 
 export type OperationStatus = "DRAFT" | "WAITING" | "READY" | "DONE" | "CANCELED";
 
