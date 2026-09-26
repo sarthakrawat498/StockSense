@@ -5,7 +5,6 @@ export interface Warehouse extends Timestamps {
   name: string;
   code: string;
   address?: string;
-  isActive: boolean;
   locationCount?: number;
 }
 
@@ -29,7 +28,6 @@ export interface CreateWarehouseParams {
 export interface UpdateWarehouseParams {
   name?: string;
   address?: string;
-  isActive?: boolean;
 }
 
 export interface CreateLocationParams {
