@@ -49,7 +49,7 @@ function getTitle(pathname: string): string {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export function Header() {
+export function Header({ title }: { title?: string } = {}) {
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
   const { user, logout } = useAuth();
@@ -62,7 +62,7 @@ export function Header() {
 
   return (
     <header className="flex h-14 flex-shrink-0 items-center justify-between border-b px-6 bg-background/80 backdrop-blur-sm dark:border-white/[0.07] dark:[background:rgba(10,10,10,0.65)] dark:[backdrop-filter:blur(20px)]">
-      <h1 className="text-sm font-semibold">{getTitle(pathname)}</h1>
+      <h1 className="text-sm font-semibold">{title ?? getTitle(pathname)}</h1>
 
       <div className="flex items-center gap-2">
         <Button

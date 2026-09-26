@@ -12,6 +12,7 @@ const KPI_DEFINITIONS = [
 	{ label: "Low Stock Items", sub: "below threshold", icon: AlertTriangle, accent: "bg-amber-500/10", iconColor: "text-amber-500" },
 	{ label: "Transfers Scheduled", sub: "internal movements", icon: ArrowRightLeft, accent: "bg-violet-500/10", iconColor: "text-violet-500" },
 ] as const;
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 function KpiCard({ label, value, sub, icon: Icon, accent, iconColor }: Readonly<{ label: string; value: string | number; sub: string; icon: React.ElementType; accent: string; iconColor: string }>) {

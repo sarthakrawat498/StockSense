@@ -15,6 +15,35 @@ export class AdjustmentWriter {
 
     const reference = await ReferenceGenerator.generate(warehouse.code, "ADJUSTMENT");
 
+    let responsibleUserId = input.responsibleUserId;
+    if (!responsibleUserId) {
+      const defaultUser = await prisma.user.findFirst();
+      responsibleUserId = defaultUser?.id ?? "00000000-0000-0000-0000-000000000000";
+    }
+
+    const itemsData = await Promise.all(
+      input.items.map(async (item) => {
+        let recorded = item.quantity;
+        if (recorded === undefined || recorded === null) {
+          const balance = await prisma.stockBalance.findUnique({
+            where: {
+              productId_locationId: {
+                productId: item.productId,
+                locationId: input.toLocationId,
+              },
+            },
+            select: { onHandQty: true },
+          });
+          recorded = balance?.onHandQty ? Number(balance.onHandQty) : 0;
+        }
+        return {
+          productId: item.productId,
+          quantity: new Decimal(recorded),
+          countedQuantity: new Decimal(item.countedQuantity),
+        };
+      }),
+    );
+
     return prisma.inventoryOperation.create({
       data: {
         reference,
@@ -22,13 +51,9 @@ export class AdjustmentWriter {
         status: "DRAFT",
         warehouseId: input.warehouseId,
         toLocationId: input.toLocationId,
-        responsibleUserId: input.responsibleUserId,
+        responsibleUserId,
         items: {
-          create: input.items.map((item) => ({
-            productId: item.productId,
-            quantity: new Decimal(item.quantity),
-            countedQuantity: new Decimal(item.countedQuantity),
-          })),
+          create: itemsData,
         },
       },
       include: {

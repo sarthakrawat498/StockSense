@@ -53,25 +53,33 @@ export const API = {
   RECEIPTS: {
     BASE: "/api/operations/receipts",
     BY_ID: (id: string) => `/api/operations/receipts/${id}`,
+    CONFIRM: (id: string) => `/api/operations/receipts/${id}/confirm`,
     VALIDATE: (id: string) => `/api/operations/receipts/${id}/validate`,
+    CANCEL: (id: string) => `/api/operations/receipts/${id}/cancel`,
   },
 
   DELIVERIES: {
     BASE: "/api/operations/deliveries",
     BY_ID: (id: string) => `/api/operations/deliveries/${id}`,
+    CONFIRM: (id: string) => `/api/operations/deliveries/${id}/confirm`,
     VALIDATE: (id: string) => `/api/operations/deliveries/${id}/validate`,
+    CANCEL: (id: string) => `/api/operations/deliveries/${id}/cancel`,
   },
 
   TRANSFERS: {
     BASE: "/api/operations/transfers",
     BY_ID: (id: string) => `/api/operations/transfers/${id}`,
+    CONFIRM: (id: string) => `/api/operations/transfers/${id}/confirm`,
     VALIDATE: (id: string) => `/api/operations/transfers/${id}/validate`,
+    CANCEL: (id: string) => `/api/operations/transfers/${id}/cancel`,
   },
 
   ADJUSTMENTS: {
     BASE: "/api/operations/adjustments",
     BY_ID: (id: string) => `/api/operations/adjustments/${id}`,
+    CONFIRM: (id: string) => `/api/operations/adjustments/${id}/confirm`,
     VALIDATE: (id: string) => `/api/operations/adjustments/${id}/validate`,
+    CANCEL: (id: string) => `/api/operations/adjustments/${id}/cancel`,
   },
 
   // ── Warehouses ────────────────────────────────────────────────────────────

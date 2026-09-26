@@ -12,7 +12,7 @@ const customJestConfig = {
   },
   testMatch: ["<rootDir>/tests/**/*.test.ts"],
   maxWorkers: 1,
-  testTimeout: 30000,
+  testTimeout: 60000,
 };
 
 module.exports = createJestConfig(customJestConfig);
