@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useState, useTransition } from "react";
 
 import { useRouter } from "next/navigation";
 
@@ -24,6 +24,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [, startTransition] = useTransition();
   const router = useRouter();
 
   const refetchUser = async () => {
@@ -37,8 +38,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  // Non-blocking — render the app immediately, hydrate user in background
   useEffect(() => {
-    refetchUser();
+    startTransition(() => {
+      refetchUser();
+    });
   }, []);
 
   const login = async (values: LoginFormValues) => {

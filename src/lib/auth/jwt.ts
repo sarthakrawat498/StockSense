@@ -44,11 +44,15 @@ export async function signRefreshToken(
 
 /**
  * Generate both Access Token and Refresh Token.
+ * firstName/lastName are included in the access token so the client
+ * never needs a separate DB query for display names.
  */
 export async function generateTokenPair(user: {
   id: string;
   username: string;
   email: string;
+  firstName?: string | null;
+  lastName?: string | null;
   role: UserRole;
   warehouseId?: string | null;
 }): Promise<TokenPair> {
@@ -57,6 +61,8 @@ export async function generateTokenPair(user: {
       sub: user.id,
       username: user.username,
       email: user.email,
+      firstName: user.firstName ?? null,
+      lastName: user.lastName ?? null,
       role: user.role,
       warehouseId: user.warehouseId ?? null,
     }),
@@ -85,6 +91,8 @@ export async function verifyToken(
     sub: payload.sub as string,
     username: payload.username as string,
     email: payload.email as string,
+    firstName: (payload.firstName as string | null) ?? null,
+    lastName: (payload.lastName as string | null) ?? null,
     role: payload.role as UserRole,
     warehouseId: (payload.warehouseId as string | null) ?? null,
     type: payload.type as "access" | "refresh",

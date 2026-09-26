@@ -22,6 +22,8 @@ export interface JwtPayload {
   sub: string; // userId
   username: string;
   email: string;
+  firstName: string | null;
+  lastName: string | null;
   role: UserRole;
   warehouseId?: string | null;
   type: "access" | "refresh";

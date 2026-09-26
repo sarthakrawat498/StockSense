@@ -1,5 +1,6 @@
 "use client";
 
+import { use } from "react";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -35,8 +36,9 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
-export default function EditProductPage({ params }: { params: { id: string } }) {
-  const prefill = MOCK_PREFILL[params.id] ?? MOCK_PREFILL["p-1"];
+export default function EditProductPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
+  const prefill = MOCK_PREFILL[id] ?? MOCK_PREFILL["p-1"];
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -48,13 +50,13 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
 
   function onSubmit(values: FormValues) {
     // TODO: call products API
-    console.warn("Edit product", params.id, values);
+    console.warn("Edit product", id, values);
   }
 
   return (
     <div className="space-y-5 max-w-[700px]">
       <div className="flex items-center gap-3">
-        <Link href={ROUTES.PRODUCT_DETAIL(params.id)}>
+        <Link href={ROUTES.PRODUCT_DETAIL(id)}>
           <Button variant="ghost" size="icon" className="h-8 w-8">
             <ArrowLeft className="h-4 w-4" />
           </Button>
@@ -127,7 +129,7 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
           </div>
 
           <div className="flex items-center justify-end gap-3">
-            <Link href={ROUTES.PRODUCT_DETAIL(params.id)}>
+            <Link href={ROUTES.PRODUCT_DETAIL(id)}>
               <Button type="button" variant="outline" size="sm" className="h-8 text-xs">Cancel</Button>
             </Link>
             <Button type="submit" size="sm" className="h-8 text-xs" disabled={form.formState.isSubmitting}>

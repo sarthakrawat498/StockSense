@@ -72,8 +72,9 @@ function InfoRow({ label, value }: { label: string; value: string | number }) {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-export default function ProductDetailPage({ params }: { params: { id: string } }) {
-  const product = getProduct(params.id);
+export default async function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const product = getProduct(id);
   const totalOnHand   = product.stockLevels.reduce((s, l) => s + l.onHand, 0);
   const totalReserved = product.stockLevels.reduce((s, l) => s + l.reserved, 0);
   const freeToUse     = totalOnHand - totalReserved;
