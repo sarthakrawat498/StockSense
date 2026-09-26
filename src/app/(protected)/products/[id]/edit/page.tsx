@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { useParams } from "next/navigation";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -15,15 +17,11 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { ROUTES } from "@/constants/routes";
+import { useCategories } from "@/features/categories/hooks/use-categories";
+import { useProduct } from "@/features/products/hooks/use-product";
+import { useProductMutations } from "@/features/products/hooks/use-product-mutations";
 
-const MOCK_CATEGORIES = ["Raw Materials", "Hardware", "Electrical", "Packaging", "Tools"];
 const MOCK_UOM = ["KG", "PCS", "M", "L", "BOX", "SET", "ROLL"];
-
-// Prefill with mock data based on id
-const MOCK_PREFILL: Record<string, { name: string; sku: string; category: string; uom: string; unitCost: number }> = {
-  "p-1": { name: "Steel Rod 12mm", sku: "STL-ROD-12", category: "Raw Materials", uom: "KG", unitCost: 85 },
-  "p-2": { name: "Steel Plate 6mm", sku: "STL-PLT-06", category: "Raw Materials", uom: "KG", unitCost: 120 },
-};
 
 const schema = z.object({
   name:      z.string().min(1, "Required"),
@@ -35,20 +33,25 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
-export default function EditProductPage({ params }: { params: { id: string } }) {
-  const prefill = MOCK_PREFILL[params.id] ?? MOCK_PREFILL["p-1"];
+export default function EditProductPage() {
+  const params = useParams<{ id: string }>();
+  const { data: product, isLoading } = useProduct(params.id);
+  const { data: categories = [] } = useCategories();
+  const { updateProduct } = useProductMutations();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
-      name: prefill.name, sku: prefill.sku,
-      categoryId: prefill.category, uom: prefill.uom, unitCost: prefill.unitCost,
+      name: "", sku: "", categoryId: "", uom: "", unitCost: 0,
     },
   });
 
+  useEffect(() => {
+    if (product) form.reset({ name: product.name, sku: product.sku, categoryId: product.categoryId, uom: product.uom, unitCost: Number(product.unitCost) });
+  }, [form, product]);
+
   function onSubmit(values: FormValues) {
-    // TODO: call products API
-    console.warn("Edit product", params.id, values);
+    updateProduct.mutate({ id: params.id, input: { ...values, unitCost: String(values.unitCost) } });
   }
 
   return (
@@ -95,7 +98,7 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
                   <Select onValueChange={field.onChange} value={field.value ?? ""}>
                     <FormControl><SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger></FormControl>
                     <SelectContent>
-                      {MOCK_CATEGORIES.map((c) => <SelectItem key={c} value={c} className="text-xs">{c}</SelectItem>)}
+                      {categories.map((category) => <SelectItem key={category.id} value={category.id} className="text-xs">{category.name}</SelectItem>)}
                     </SelectContent>
                   </Select>
                   <FormMessage className="text-xs" />
@@ -130,7 +133,7 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
             <Link href={ROUTES.PRODUCT_DETAIL(params.id)}>
               <Button type="button" variant="outline" size="sm" className="h-8 text-xs">Cancel</Button>
             </Link>
-            <Button type="submit" size="sm" className="h-8 text-xs" disabled={form.formState.isSubmitting}>
+            <Button type="submit" size="sm" className="h-8 text-xs" disabled={isLoading || form.formState.isSubmitting || updateProduct.isPending}>
               Save Changes
             </Button>
           </div>
