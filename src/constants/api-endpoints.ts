@@ -29,8 +29,15 @@ export const API = {
   PRODUCTS: {
     BASE: "/api/products",
     BY_ID: (id: string) => `/api/products/${id}`,
+    STOCK: (id: string) => `/api/products/${id}/stock`,
     CATEGORIES: "/api/products/categories",
     UNITS: "/api/products/units",
+  },
+
+  // ── Categories ───────────────────────────────────────────────────────────
+  CATEGORIES: {
+    BASE: "/api/categories",
+    BY_ID: (id: string) => `/api/categories/${id}`,
   },
 
   // ── Operations ────────────────────────────────────────────────────────────

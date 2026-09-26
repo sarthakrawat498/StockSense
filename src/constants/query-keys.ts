@@ -16,8 +16,14 @@ export const QUERY_KEYS = {
   products: {
     all: (filters?: Record<string, unknown>) => ["products", "list", filters] as const,
     detail: (id: string) => ["products", "detail", id] as const,
+    stock: (id: string) => ["products", "stock", id] as const,
     categories: () => ["products", "categories"] as const,
     units: () => ["products", "units"] as const,
+  },
+
+  categories: {
+    all: () => ["categories", "list"] as const,
+    detail: (id: string) => ["categories", "detail", id] as const,
   },
 
   // ── Operations: Receipts ──────────────────────────────────────────────────

@@ -1,30 +1,21 @@
-import type { Timestamps, OperationType } from "@/types/common.types";
+import type { Timestamps } from "@/types/common.types";
 
 // ─── Domain Types ─────────────────────────────────────────────────────────────
 
 export interface Category {
   id: string;
   name: string;
-  description?: string;
-}
-
-export interface UnitOfMeasure {
-  id: string;
-  name: string;
-  symbol: string;
 }
 
 export interface Product extends Timestamps {
   id: string;
   name: string;
   sku: string;
-  description?: string;
   categoryId: string;
   category?: Category;
-  unitId: string;
-  unit?: UnitOfMeasure;
+  uom: string;
+  unitCost: string;
   reorderPoint: number;
-  isActive: boolean;
   /** Computed: total on-hand qty across all locations */
   totalStock?: number;
   /** Computed: true if totalStock <= reorderPoint */
@@ -37,7 +28,17 @@ export interface StockLevel {
   locationId: string;
   locationName?: string;
   warehouseName?: string;
-  quantity: number;
+  onHandQty: number;
+  reservedQty: number;
+  freeQty: number;
+}
+
+export interface ProductStock {
+  productId: string;
+  balances: StockLevel[];
+  totalOnHand: number;
+  totalReserved: number;
+  totalFree: number;
 }
 
 export interface ReorderRule {
@@ -53,19 +54,20 @@ export interface ReorderRule {
 export interface CreateProductParams {
   name: string;
   sku: string;
-  description?: string;
   categoryId: string;
-  unitId: string;
+  uom: string;
+  unitCost: string;
   reorderPoint?: number;
   initialStock?: number;
   initialLocationId?: string;
+  actorId?: string;
 }
 
 export interface UpdateProductParams {
   name?: string;
-  description?: string;
   categoryId?: string;
-  unitId?: string;
+  uom?: string;
+  unitCost?: string;
   reorderPoint?: number;
   isActive?: boolean;
 }
@@ -74,8 +76,7 @@ export interface ProductFilters {
   search?: string;
   categoryId?: string;
   warehouseId?: string;
-  lowStockOnly?: boolean;
-  isActive?: boolean;
+  locationId?: string;
   page?: number;
   pageSize?: number;
 }

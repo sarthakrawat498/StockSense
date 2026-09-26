@@ -2,8 +2,8 @@ export { ProductService } from "./product-service";
 export type {
   Product,
   Category,
-  UnitOfMeasure,
   StockLevel,
+  ProductStock,
   ReorderRule,
   CreateProductParams,
   UpdateProductParams,
