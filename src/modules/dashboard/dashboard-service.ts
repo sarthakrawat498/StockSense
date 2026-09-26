@@ -1,7 +1,7 @@
 import { OperationStatus, OperationType } from "@prisma/client";
 
 import { prisma } from "@/lib/db";
-import type { DashboardFilters, DashboardKPIs } from "./types";
+import type { DashboardFilters, DashboardKPIs, RecentOperation } from "./types";
 
 const numeric = (value: { toString(): string } | number) => Number(value.toString());
 
@@ -57,6 +57,33 @@ export class DashboardService {
 			}),
 		]);
 
+		const recentOperations = await prisma.inventoryOperation.findMany({
+			where: operationWhere,
+			orderBy: { createdAt: "desc" },
+			take: 10,
+			select: {
+				id: true,
+				reference: true,
+				type: true,
+				status: true,
+				createdAt: true,
+				scheduledDate: true,
+				warehouse: { select: { name: true } },
+				responsibleUser: { select: { username: true, email: true } },
+			},
+		});
+
+		const recentOperationData: RecentOperation[] = recentOperations.map((operation) => ({
+			id: operation.id,
+			reference: operation.reference,
+			type: operation.type,
+			status: operation.status,
+			warehouseName: operation.warehouse.name,
+			responsibleUserName: operation.responsibleUser.username || operation.responsibleUser.email,
+			scheduledDate: operation.scheduledDate?.toISOString(),
+			createdAt: operation.createdAt.toISOString(),
+		}));
+
 		return {
 			totalProductsInStock,
 			lowStockItems,
@@ -64,6 +91,7 @@ export class DashboardService {
 			pendingReceipts,
 			pendingDeliveries,
 			scheduledTransfers,
+			recentOperations: recentOperationData,
 		};
 	}
 }

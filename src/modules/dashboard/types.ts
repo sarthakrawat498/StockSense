@@ -14,6 +14,18 @@ export interface DashboardKPIs {
   pendingReceipts: number;
   pendingDeliveries: number;
   scheduledTransfers: number;
+  recentOperations: RecentOperation[];
+}
+
+export interface RecentOperation {
+  id: string;
+  reference: string;
+  type: OperationType;
+  status: OperationStatus;
+  warehouseName: string;
+  responsibleUserName: string;
+  scheduledDate?: string;
+  createdAt: string;
 }
 
 export interface DashboardAlert {
