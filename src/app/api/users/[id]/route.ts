@@ -9,11 +9,13 @@ const updateRoleSchema = z.object({
   role: z.enum(["MANAGER", "STAFF"]),
 });
 
+type RouteContext = { params: Promise<{ id: string }> };
+
 // PATCH /api/users/:id — MANAGER only — update role
-export const PATCH = withAuth(
-  async (req: NextRequest, context: { params: { id: string } }, _user) => {
+export const PATCH = withAuth<RouteContext>(
+  async (req: NextRequest, context: RouteContext, _user) => {
     try {
-      const { id } = context.params;
+      const { id } = await context.params;
       const body = await req.json();
       const { role } = updateRoleSchema.parse(body);
 
