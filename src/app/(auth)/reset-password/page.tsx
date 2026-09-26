@@ -1,12 +1,16 @@
 "use client";
 
+import React, { useState, Suspense } from "react";
+
 import Link from "next/link";
-import { useForm } from "react-hook-form";
+import { useRouter, useSearchParams } from "next/navigation";
+
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, BarChart3 } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Form,
   FormControl,
@@ -15,21 +19,49 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { ROUTES } from "@/constants/routes";
 import {
   resetPasswordSchema,
   type ResetPasswordFormValues,
 } from "@/features/auth/schemas/auth.schema";
-import { ROUTES } from "@/constants/routes";
+import { authClient } from "@/features/auth/services/auth.service";
 
-export default function ResetPasswordPage() {
+function ResetPasswordForm() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const emailFromUrl = searchParams.get("email") || "";
+  const otpFromUrl = searchParams.get("otp") || "";
+
+  const [serverError, setServerError] = useState<string | null>(null);
+
   const form = useForm<ResetPasswordFormValues>({
     resolver: zodResolver(resetPasswordSchema),
-    defaultValues: { password: "", confirmPassword: "" },
+    defaultValues: {
+      email: emailFromUrl,
+      otp: otpFromUrl,
+      password: "",
+      confirmPassword: "",
+    },
   });
 
-  function onSubmit(values: ResetPasswordFormValues) {
-    // TODO: wire to auth service with OTP token from query params
-    console.warn("reset-password", values);
+  async function onSubmit(values: ResetPasswordFormValues) {
+    setServerError(null);
+    try {
+      const message = await authClient.resetPassword({
+        email: values.email,
+        otp: values.otp,
+        newPassword: values.password,
+      });
+
+      toast.success(message);
+      router.push(ROUTES.LOGIN);
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Failed to reset password. Please try again.";
+      setServerError(message);
+      toast.error(message);
+    }
   }
 
   return (
@@ -46,13 +78,58 @@ export default function ResetPasswordPage() {
       <div className="space-y-1">
         <h1 className="text-2xl font-semibold tracking-tight">Set new password</h1>
         <p className="text-sm text-muted-foreground">
-          Choose a strong password for your account
+          Enter the verification code and choose a new password
         </p>
       </div>
+
+      {serverError && (
+        <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive font-medium border border-destructive/20">
+          {serverError}
+        </div>
+      )}
 
       {/* Form */}
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-sm font-medium">Email address</FormLabel>
+                <FormControl>
+                  <Input
+                    type="email"
+                    placeholder="you@company.com"
+                    autoComplete="email"
+                    className="h-10"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage className="text-xs" />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="otp"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-sm font-medium">6-digit verification code</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="123456"
+                    maxLength={6}
+                    className="h-10 tracking-widest font-mono text-center text-lg"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage className="text-xs" />
+              </FormItem>
+            )}
+          />
+
           <FormField
             control={form.control}
             name="password"
@@ -111,5 +188,13 @@ export default function ResetPasswordPage() {
         Back to sign in
       </Link>
     </div>
+  );
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-sm text-muted-foreground">Loading...</div>}>
+      <ResetPasswordForm />
+    </Suspense>
   );
 }
