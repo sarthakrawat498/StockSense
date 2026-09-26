@@ -3,6 +3,8 @@ import { ProductService } from "@/modules/product";
 import { createProductSchema, productQuerySchema } from "@/features/products/schemas/product-schemas";
 import { apiErrorFromException, apiSuccess, apiValidationError } from "@/lib/api/response";
 
+import { getSessionUserFromRequest } from "@/lib/auth/session";
+
 const productService = new ProductService();
 
 function validationResponse(result: { success: false; error: { issues: Array<{ path: (string | number)[]; message: string; code: string }> } }) {
@@ -22,6 +24,7 @@ export async function POST(request: NextRequest) {
 	try {
 		const result = createProductSchema.safeParse(await request.json());
 		if (!result.success) return validationResponse(result);
-		return apiSuccess(await productService.create(result.data), 201);
+		const user = await getSessionUserFromRequest(request);
+		return apiSuccess(await productService.create({ ...result.data, actorId: user?.id }), 201);
 	} catch (error) { return apiErrorFromException(error); }
 }
