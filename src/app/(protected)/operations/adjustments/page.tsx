@@ -1,2 +1,2 @@
-// TODO: Inventory adjustments list page
-export default function AdjustmentsPage() {}
+import { OperationListPage } from "@/features/operations/shared/operation-list-page";
+export default function Page() { return <OperationListPage type="ADJUSTMENT" />; }

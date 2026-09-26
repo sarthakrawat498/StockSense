@@ -1,51 +1,25 @@
-import type { Timestamps, OperationStatus } from "@/types/common.types";
+import type { OperationStatus } from "@/types/common.types";
 
-export interface TransferLine {
-  id: string;
-  productId: string;
-  productName?: string;
-  productSku?: string;
-  demandQty: number;
-  doneQty: number;
-}
+// ─── Input DTOs ──────────────────────────────────────────────────────────────
 
-export interface Transfer extends Timestamps {
-  id: string;
-  reference: string;
-  fromWarehouseId: string;
-  fromWarehouseName?: string;
-  toWarehouseId: string;
-  toWarehouseName?: string;
-  fromLocationId?: string;
-  toLocationId?: string;
-  status: OperationStatus;
+export interface CreateTransferInput {
+  warehouseId: string;
+  fromLocationId: string;
+  toLocationId: string;
   scheduledDate?: string;
-  validatedAt?: string;
-  notes?: string;
-  lines: TransferLine[];
+  responsibleUserId: string;
+  items: Array<{ productId: string; quantity: number }>;
 }
 
-export interface CreateTransferParams {
-  fromWarehouseId: string;
-  toWarehouseId: string;
+export interface UpdateTransferInput {
   fromLocationId?: string;
   toLocationId?: string;
   scheduledDate?: string;
-  notes?: string;
-  lines: { productId: string; demandQty: number }[];
-}
-
-export interface UpdateTransferParams {
-  fromLocationId?: string;
-  toLocationId?: string;
-  scheduledDate?: string;
-  notes?: string;
-  lines?: { id?: string; productId: string; demandQty: number; doneQty?: number }[];
+  items?: Array<{ id?: string; productId: string; quantity: number }>;
 }
 
 export interface TransferFilters {
-  fromWarehouseId?: string;
-  toWarehouseId?: string;
+  warehouseId?: string;
   status?: OperationStatus;
   search?: string;
   page?: number;

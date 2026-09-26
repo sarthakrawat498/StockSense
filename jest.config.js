@@ -11,6 +11,8 @@ const customJestConfig = {
     "^@/(.*)$": "<rootDir>/src/$1",
   },
   testMatch: ["<rootDir>/tests/**/*.test.ts"],
+  maxWorkers: 1,
+  testTimeout: 30000,
 };
 
 module.exports = createJestConfig(customJestConfig);

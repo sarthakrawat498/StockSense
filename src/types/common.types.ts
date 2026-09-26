@@ -10,7 +10,15 @@ export type OperationStatus = "DRAFT" | "WAITING" | "READY" | "DONE" | "CANCELED
 
 export type OperationType = "RECEIPT" | "DELIVERY" | "TRANSFER" | "ADJUSTMENT";
 
-export type StockMoveType = "IN" | "OUT" | "TRANSFER" | "ADJUST";
+export type StockMovementType =
+  | "RECEIPT"
+  | "DELIVERY"
+  | "TRANSFER"
+  | "ADJUSTMENT_IN"
+  | "ADJUSTMENT_OUT";
+
+/** Alias for backward compatibility */
+export type StockMoveType = StockMovementType;
 
 /** Utility type: make specific keys required */
 export type RequireFields<T, K extends keyof T> = T & Required<Pick<T, K>>;
@@ -22,4 +30,13 @@ export type PartialExcept<T, K extends keyof T> = Partial<Omit<T, K>> & Pick<T, 
 export interface Timestamps {
   createdAt: string; // ISO string on the client
   updatedAt: string;
+}
+
+/** Paginated response wrapper */
+export interface PaginatedResult<T> {
+  items: T[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
 }
