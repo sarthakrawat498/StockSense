@@ -14,9 +14,6 @@ export interface Location extends Timestamps {
   code: string;
   warehouseId: string;
   warehouseName?: string;
-  parentId?: string;
-  isActive: boolean;
-  children?: Location[];
 }
 
 export interface CreateWarehouseParams {
@@ -34,5 +31,8 @@ export interface CreateLocationParams {
   warehouseId: string;
   name: string;
   code: string;
-  parentId?: string;
+}
+
+export interface UpdateLocationParams {
+  name?: string;
 }
