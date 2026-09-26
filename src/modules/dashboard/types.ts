@@ -1,10 +1,16 @@
-/**
- * Dashboard KPI types — aggregated stats for the main dashboard view.
- */
+import type { OperationStatus, OperationType } from "@prisma/client";
+
+export interface DashboardFilters {
+  warehouseId?: string;
+  categoryId?: string;
+  operationType?: OperationType;
+  status?: OperationStatus;
+}
+
 export interface DashboardKPIs {
-  totalProducts: number;
-  lowStockCount: number;
-  outOfStockCount: number;
+  totalProductsInStock: number;
+  lowStockItems: number;
+  outOfStockItems: number;
   pendingReceipts: number;
   pendingDeliveries: number;
   scheduledTransfers: number;

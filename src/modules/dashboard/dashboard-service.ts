@@ -1,93 +1,69 @@
-import { prisma } from "@/lib/db";
-import type { DashboardAlert, DashboardKPIs } from "./types";
+import { OperationStatus, OperationType } from "@prisma/client";
 
-export interface DashboardData {
-	kpis: DashboardKPIs;
-	alerts: DashboardAlert[];
-}
+import { prisma } from "@/lib/db";
+import type { DashboardFilters, DashboardKPIs } from "./types";
 
 const numeric = (value: { toString(): string } | number) => Number(value.toString());
 
 export class DashboardService {
-	private async getLowStockAlerts(): Promise<DashboardAlert[]> {
+	async getDashboard(filters: DashboardFilters = {}): Promise<DashboardKPIs> {
 		const products = await prisma.product.findMany({
+			where: filters.categoryId ? { categoryId: filters.categoryId } : undefined,
 			select: {
-				id: true,
-				name: true,
-				sku: true,
 				reorderPoint: true,
-				reorderRule: { select: { minQty: true, maxQty: true, isActive: true } },
-				stockBalances: { select: { onHandQty: true } },
+				stockBalances: {
+					where: filters.warehouseId
+						? { location: { warehouseId: filters.warehouseId } }
+						: undefined,
+					select: { onHandQty: true },
+				},
 			},
-			orderBy: { name: "asc" },
 		});
 
-		return products.reduce<DashboardAlert[]>((result, product) => {
-				const currentStock = product.stockBalances.reduce((sum, balance) => sum + numeric(balance.onHandQty), 0);
-				const reorderPoint = numeric(product.reorderPoint);
-				const rule = product.reorderRule?.isActive ? product.reorderRule : undefined;
-				const effectiveThreshold = rule ? numeric(rule.minQty) : reorderPoint;
-				if (currentStock > effectiveThreshold) return result;
-				result.push({
-					productId: product.id,
-					productName: product.name,
-					sku: product.sku,
-					currentStock,
-					reorderPoint,
-					effectiveThreshold,
-					suggestedQuantity: rule ? Math.max(0, numeric(rule.maxQty) - currentStock) : undefined,
-					isOutOfStock: currentStock <= 0,
-				});
-				return result;
-			}, [])
-			.sort((left, right) => {
-				if (left.isOutOfStock !== right.isOutOfStock) return left.isOutOfStock ? -1 : 1;
-				const leftRatio = left.effectiveThreshold === 0 ? 1 : left.currentStock / left.effectiveThreshold;
-				const rightRatio = right.effectiveThreshold === 0 ? 1 : right.currentStock / right.effectiveThreshold;
-				return leftRatio - rightRatio;
-			});
+        let totalProductsInStock = 0;
+        let lowStockItems = 0;
+        let outOfStockItems = 0;
+
+        for (const product of products) {
+            const currentStock = product.stockBalances.reduce(
+                (sum, balance) => sum + numeric(balance.onHandQty),
+                0,
+            );
+            const reorderPoint = numeric(product.reorderPoint);
+
+            if (currentStock > 0) totalProductsInStock += 1;
+            if (currentStock <= 0) outOfStockItems += 1;
+            else if (currentStock <= reorderPoint) lowStockItems += 1;
+        }
+
+        const operationWhere = {
+            ...(filters.warehouseId ? { warehouseId: filters.warehouseId } : {}),
+            ...(filters.operationType ? { type: filters.operationType } : {}),
+            ...(filters.status ? { status: filters.status } : {}),
+            ...(filters.categoryId
+                ? { items: { some: { product: { categoryId: filters.categoryId } } } }
+                : {}),
+        };
+        const pendingWhere = {
+            ...operationWhere,
+            status: filters.status ?? { in: [OperationStatus.DRAFT, OperationStatus.WAITING, OperationStatus.READY] },
+        };
 
 		const [pendingReceipts, pendingDeliveries, scheduledTransfers] = await Promise.all([
-			prisma.inventoryOperation.count({ where: { type: "RECEIPT", status: { in: ["DRAFT", "WAITING", "READY"] } } }),
-			prisma.inventoryOperation.count({ where: { type: "DELIVERY", status: { in: ["DRAFT", "WAITING", "READY"] } } }),
-			prisma.inventoryOperation.count({ where: { type: "TRANSFER", status: { in: ["DRAFT", "WAITING", "READY"] }, scheduledDate: { not: null } } }),
+			prisma.inventoryOperation.count({ where: { ...pendingWhere, type: OperationType.RECEIPT } }),
+			prisma.inventoryOperation.count({ where: { ...pendingWhere, type: OperationType.DELIVERY } }),
+			prisma.inventoryOperation.count({
+				where: { ...pendingWhere, type: OperationType.TRANSFER, scheduledDate: { not: null } },
+			}),
 		]);
 
 		return {
-			kpis: {
-				totalProducts: products.length,
-				lowStockCount: alerts.length,
-				outOfStockCount: alerts.filter((alert) => alert.isOutOfStock).length,
-				pendingReceipts,
-				pendingDeliveries,
-				scheduledTransfers,
-			},
-			alerts,
-	}
-
-	async getDashboard(): Promise<DashboardData> {
-		const [alerts, pendingReceipts, pendingDeliveries, scheduledTransfers, totalProducts] = await Promise.all([
-			this.getLowStockAlerts(),
-			prisma.inventoryOperation.count({ where: { type: "RECEIPT", status: { in: ["DRAFT", "WAITING", "READY"] } } }),
-			prisma.inventoryOperation.count({ where: { type: "DELIVERY", status: { in: ["DRAFT", "WAITING", "READY"] } } }),
-			prisma.inventoryOperation.count({ where: { type: "TRANSFER", status: { in: ["DRAFT", "WAITING", "READY"] }, scheduledDate: { not: null } } }),
-			prisma.product.count(),
-		]);
-
-		return {
-			kpis: {
-				totalProducts,
-				lowStockCount: alerts.length,
-				outOfStockCount: alerts.filter((alert) => alert.isOutOfStock).length,
-				pendingReceipts,
-				pendingDeliveries,
-				scheduledTransfers,
-			},
-			alerts,
+			totalProductsInStock,
+			lowStockItems,
+			outOfStockItems,
+			pendingReceipts,
+			pendingDeliveries,
+			scheduledTransfers,
 		};
-	}
-
-	async getLowStock(): Promise<DashboardAlert[]> {
-		return this.getLowStockAlerts();
 	}
 }

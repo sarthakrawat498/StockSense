@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import type { OperationType } from "@/types/common.types";
+import { useMoveHistory } from "@/features/move-history/hooks/use-move-history";
 
 // ─── Mock data ────────────────────────────────────────────────────────────────
 
@@ -95,8 +96,28 @@ const TYPE_STYLES: Record<OperationType, { label: string; className: string }> =
 export default function MoveHistoryPage() {
   const [search, setSearch]   = useState("");
   const [typeFilter, setType] = useState("all");
+  const { data, isLoading, isError } = useMoveHistory(
+    typeFilter === "all" ? {} : { operationType: typeFilter as OperationType },
+  );
 
-  const filtered = MOCK_MOVES.filter((m) => {
+  const moves: StockMove[] = (data?.items ?? []).map((move) => {
+    const isOutbound = move.type === "DELIVERY" || move.type === "ADJUSTMENT_OUT";
+    return {
+      id: move.id,
+      reference: move.reference,
+      operationType: move.operationType,
+      product: move.productName ?? "Unknown product",
+      sku: move.productSku ?? "—",
+      uom: "",
+      fromLocation: move.fromLocationName ?? null,
+      toLocation: move.toLocationName ?? null,
+      quantity: isOutbound ? -move.quantity : move.quantity,
+      movedBy: "—",
+      movedAt: move.movedAt,
+    };
+  });
+
+  const filtered = moves.filter((m) => {
     const matchSearch =
       !search ||
       m.reference.toLowerCase().includes(search.toLowerCase()) ||
@@ -144,7 +165,7 @@ export default function MoveHistoryPage() {
           </SelectContent>
         </Select>
         <p className="text-xs text-muted-foreground ml-auto">
-          {filtered.length} record{filtered.length !== 1 ? "s" : ""}
+          {data?.total ?? filtered.length} record{(data?.total ?? filtered.length) !== 1 ? "s" : ""}
         </p>
       </div>
 
@@ -165,7 +186,11 @@ export default function MoveHistoryPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filtered.length === 0 ? (
+            {isLoading ? (
+              <TableRow><TableCell colSpan={9} className="py-16 text-center text-sm text-muted-foreground">Loading ledger…</TableCell></TableRow>
+            ) : isError ? (
+              <TableRow><TableCell colSpan={9} className="py-16 text-center text-sm text-destructive">Unable to load move history.</TableCell></TableRow>
+            ) : filtered.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={9} className="py-16 text-center text-sm text-muted-foreground">
                   No records match your filters

@@ -12,6 +12,10 @@ export const QUERY_KEYS = {
     alerts: () => ["dashboard", "alerts"] as const,
   },
 
+  alerts: {
+    lowStock: () => ["alerts", "low-stock"] as const,
+  },
+
   // ── Products ──────────────────────────────────────────────────────────────
   products: {
     all: (filters?: Record<string, unknown>) => ["products", "list", filters] as const,
@@ -65,6 +69,7 @@ export const QUERY_KEYS = {
   // ── Move History / Stock Ledger ───────────────────────────────────────────
   stockMoves: {
     all: (filters?: Record<string, unknown>) => ["stockMoves", "list", filters] as const,
+    detail: (id: string) => ["stockMoves", "detail", id] as const,
   },
 
   stock: {
