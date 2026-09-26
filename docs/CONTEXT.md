@@ -136,7 +136,7 @@ types.ts              # Frontend-facing types for this feature
 
 Key models defined in `prisma/schema.prisma`:
 
-- **User** — email, hashedPassword, firstName, lastName, role (INVENTORY_MANAGER | WAREHOUSE_STAFF)
+- **User** — email, hashedPassword, firstName, lastName, role (MANAGER | STAFF)
 - **Product** — name, SKU, category, unit of measure, reorderPoint
 - **Category** — product categories
 - **UnitOfMeasure** — kg, pcs, litre, etc.
