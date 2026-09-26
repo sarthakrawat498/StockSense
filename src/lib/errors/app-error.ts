@@ -11,35 +11,45 @@ export class AppError extends Error {
   public readonly code?: string;
   public readonly errors?: ApiError[];
 
+  constructor(statusCode: number, message: string, code?: string);
   constructor(
-    statusCodeOrMessage: number | string,
-    messageOrStatusCode?: string | number,
-    optionsOrCode?: { code?: string; errors?: ApiError[]; isOperational?: boolean } | string
+    message: string,
+    statusCode?: number,
+    options?: { code?: string; errors?: ApiError[]; isOperational?: boolean } | string
+  );
+  constructor(
+    first: number | string,
+    second?: string | number,
+    third?: { code?: string; errors?: ApiError[]; isOperational?: boolean } | string
   ) {
-    let statusCode: number;
-    let message: string;
+    let statusCode = 500;
+    let message = "Application error";
     let code: string | undefined;
     let errors: ApiError[] | undefined;
     let isOperational = true;
 
-    if (typeof statusCodeOrMessage === "number") {
-      statusCode = statusCodeOrMessage;
-      message = typeof messageOrStatusCode === "string" ? messageOrStatusCode : "Application error";
-      if (typeof optionsOrCode === "string") {
-        code = optionsOrCode;
+    if (typeof first === "number") {
+      statusCode = first;
+      message = typeof second === "string" ? second : "Application error";
+      if (typeof third === "string") {
+        code = third;
       }
     } else {
-      message = statusCodeOrMessage;
-      statusCode = typeof messageOrStatusCode === "number" ? messageOrStatusCode : 500;
-      if (typeof optionsOrCode === "object" && optionsOrCode !== null) {
-        code = optionsOrCode.code;
-        errors = optionsOrCode.errors;
-        if (optionsOrCode.isOperational !== undefined) {
-          isOperational = optionsOrCode.isOperational;
+      message = first;
+      statusCode = typeof second === "number" ? second : 500;
+      if (typeof third === "object" && third !== null) {
+        code = third.code;
+        errors = third.errors;
+        if (third.isOperational !== undefined) {
+          isOperational = third.isOperational;
         }
-      } else if (typeof optionsOrCode === "string") {
-        code = optionsOrCode;
+      } else if (typeof third === "string") {
+        code = third;
       }
+    }
+
+    if (!code && statusCode === 500) {
+      code = "INTERNAL_ERROR";
     }
 
     super(message);
@@ -74,15 +84,21 @@ export class ForbiddenError extends AppError {
 }
 
 export class NotFoundError extends AppError {
-  constructor(resourceOrMessage = "Resource not found", id?: string, code = "NOT_FOUND") {
-    const message = id ? `${resourceOrMessage} '${id}' not found` : resourceOrMessage;
-    super(message, 404, { code });
+  constructor(resource: string, id?: string);
+  constructor(messageOrResource?: string, id?: string);
+  constructor(messageOrResource = "Resource", id?: string) {
+    const message = id
+      ? `${messageOrResource} '${id}' not found`
+      : /not found$/i.test(messageOrResource)
+        ? messageOrResource
+        : `${messageOrResource} not found`;
+    super(404, message, "NOT_FOUND");
   }
 }
 
 export class ConflictError extends AppError {
-  constructor(message = "Resource already exists", code = "CONFLICT") {
-    super(message, 409, { code });
+  constructor(message: string) {
+    super(409, message, "CONFLICT");
   }
 }
 

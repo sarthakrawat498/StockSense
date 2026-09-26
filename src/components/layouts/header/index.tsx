@@ -1,5 +1,6 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { Moon, Sun, User, LogOut, ChevronDown } from "lucide-react";
 import { useTheme } from "next-themes";
 
@@ -13,21 +14,48 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
-interface HeaderProps {
-  title: string;
+// ─── Pathname → title mapping ─────────────────────────────────────────────────
+
+const STATIC_TITLES: Record<string, string> = {
+  "/dashboard":                      "Dashboard",
+  "/products":                       "Products",
+  "/operations/receipts":            "Receipts",
+  "/operations/receipts/new":        "New Receipt",
+  "/operations/deliveries":          "Deliveries",
+  "/operations/deliveries/new":      "New Delivery",
+  "/operations/transfers":           "Transfers",
+  "/operations/transfers/new":       "New Transfer",
+  "/operations/adjustments":         "Adjustments",
+  "/operations/adjustments/new":     "New Adjustment",
+  "/warehouses":                     "Warehouses",
+  "/warehouses/new":                 "New Warehouse",
+  "/move-history":                   "Move History",
+  "/settings":                       "Settings",
+  "/profile":                        "Profile",
+};
+
+function getTitle(pathname: string): string {
+  if (STATIC_TITLES[pathname]) return STATIC_TITLES[pathname];
+  if (/^\/operations\/receipts\/.+/.test(pathname))    return "Receipt";
+  if (/^\/operations\/deliveries\/.+/.test(pathname))  return "Delivery";
+  if (/^\/operations\/transfers\/.+/.test(pathname))   return "Transfer";
+  if (/^\/operations\/adjustments\/.+/.test(pathname)) return "Adjustment";
+  if (/^\/products\/.+/.test(pathname))                return "Product";
+  if (/^\/warehouses\/.+/.test(pathname))              return "Warehouse";
+  return "StockSense";
 }
 
-export function Header({ title }: HeaderProps) {
+// ─── Component ────────────────────────────────────────────────────────────────
+
+export function Header({ title }: { title?: string } = {}) {
+  const pathname = usePathname();
   const { theme, setTheme } = useTheme();
 
   return (
-    <header className="flex h-14 items-center justify-between border-b bg-background/80 backdrop-blur-sm dark:border-white/[0.07] dark:[background:rgba(10,10,10,0.65)] dark:[backdrop-filter:blur(20px)] px-6">
-      {/* Page title */}
-      <h1 className="text-sm font-semibold text-foreground">{title}</h1>
+    <header className="flex h-14 flex-shrink-0 items-center justify-between border-b px-6 bg-background/80 backdrop-blur-sm dark:border-white/[0.07] dark:[background:rgba(10,10,10,0.65)] dark:[backdrop-filter:blur(20px)]">
+      <h1 className="text-sm font-semibold">{title ?? getTitle(pathname)}</h1>
 
-      {/* Right controls */}
       <div className="flex items-center gap-2">
-        {/* Dark mode toggle */}
         <Button
           variant="ghost"
           size="icon"
@@ -39,27 +67,22 @@ export function Header({ title }: HeaderProps) {
           <span className="sr-only">Toggle theme</span>
         </Button>
 
-        {/* User menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="h-8 gap-2 px-2 text-sm">
               <Avatar className="h-6 w-6">
-                <AvatarFallback className="text-[10px] font-semibold bg-primary/10 text-primary">
-                  U
-                </AvatarFallback>
+                <AvatarFallback className="text-[10px] font-semibold bg-primary/10 text-primary">U</AvatarFallback>
               </Avatar>
               <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-44">
             <DropdownMenuItem className="gap-2 text-sm">
-              <User className="h-3.5 w-3.5" />
-              Profile
+              <User className="h-3.5 w-3.5" />Profile
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem className="gap-2 text-sm text-destructive focus:text-destructive">
-              <LogOut className="h-3.5 w-3.5" />
-              Sign out
+              <LogOut className="h-3.5 w-3.5" />Sign out
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

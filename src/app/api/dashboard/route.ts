@@ -1,2 +1,9 @@
-// TODO: GET /api/dashboard  →  returns KPIs + low-stock alerts
-export async function GET() {}
+import { apiErrorFromException, apiSuccess } from "@/lib/api/response";
+import { DashboardService } from "@/modules/dashboard";
+
+const service = new DashboardService();
+
+export async function GET() {
+	try { return apiSuccess(await service.getDashboard()); }
+	catch (error) { return apiErrorFromException(error); }
+}

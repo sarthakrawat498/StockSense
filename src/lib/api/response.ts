@@ -9,23 +9,30 @@ export type { ApiResponse, ApiError };
 
 /**
  * Standard successful response.
- * Accepts either:
- * - apiSuccess(data, "Created/Updated message", 200)
- * - apiSuccess(data, 200)
+ * Supports:
+ * - apiSuccess(data, status, message)
+ * - apiSuccess(data, message, status)
+ * - apiSuccess(data, status)
  * - apiSuccess(data)
  */
 export function apiSuccess<T>(
   data: T,
   messageOrStatus?: string | number,
-  status = 200
+  statusOrMessage?: number | string
 ): NextResponse<ApiResponse<T>> {
   let message: string | undefined;
-  let statusCode = status;
+  let statusCode = 200;
 
   if (typeof messageOrStatus === "number") {
     statusCode = messageOrStatus;
+    if (typeof statusOrMessage === "string") {
+      message = statusOrMessage;
+    }
   } else if (typeof messageOrStatus === "string") {
     message = messageOrStatus;
+    if (typeof statusOrMessage === "number") {
+      statusCode = statusOrMessage;
+    }
   }
 
   return NextResponse.json(
@@ -45,13 +52,13 @@ export function apiCreated<T>(
   data: T,
   message = "Created successfully"
 ): NextResponse<ApiResponse<T>> {
-  return apiSuccess(data, message, 201);
+  return apiSuccess(data, 201, message);
 }
 
 /**
- * Universal error handler for route handlers.
+ * Extracts and formats error responses from thrown exceptions.
  */
-export function handleApiError(error: unknown): NextResponse<ApiResponse<null>> {
+export function apiErrorFromException(error: unknown): NextResponse<ApiResponse<null>> {
   if (error instanceof ZodError) {
     const formattedErrors: ApiError[] = error.errors.map((err) => ({
       field: err.path.join("."),
@@ -59,7 +66,15 @@ export function handleApiError(error: unknown): NextResponse<ApiResponse<null>> 
       code: err.code,
     }));
 
-    return apiError("Validation failed", 422, formattedErrors, "VALIDATION_ERROR");
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Validation failed",
+        code: "VALIDATION_ERROR",
+        errors: formattedErrors,
+      },
+      { status: 422 }
+    );
   }
 
   if (error instanceof AppError) {
@@ -67,8 +82,8 @@ export function handleApiError(error: unknown): NextResponse<ApiResponse<null>> 
       {
         success: false,
         message: error.message,
-        ...(error.code ? { code: error.code } : {}),
-        ...(error.errors && error.errors.length > 0 ? { errors: error.errors } : {}),
+        code: error.code,
+        errors: error.errors ?? (error.code ? [{ code: error.code, message: error.message }] : undefined),
       },
       { status: error.statusCode }
     );
@@ -96,6 +111,13 @@ export function handleApiError(error: unknown): NextResponse<ApiResponse<null>> 
     return apiConflict("A record with that value already exists");
   }
 
+  if (
+    error instanceof SyntaxError ||
+    (typeof error === "object" && error !== null && "name" in error && error.name === "SyntaxError")
+  ) {
+    return apiError("Invalid JSON", 400);
+  }
+
   console.error("[Unhandled API Error]:", error);
   return NextResponse.json(
     {
@@ -107,31 +129,36 @@ export function handleApiError(error: unknown): NextResponse<ApiResponse<null>> 
   );
 }
 
+/** Universal error handler alias */
+export const handleApiError = apiErrorFromException;
+
 /**
  * Standard error response.
  * Handles both:
  * - apiError(error) where error is an unknown caught exception
- * - apiError(message, status, errors, code)
+ * - apiError(message, status?, errors?, code?)
  */
+export function apiError(message: string, status?: number, errors?: ApiError[], code?: string): NextResponse<ApiResponse<null>>;
+export function apiError(error: unknown): NextResponse<ApiResponse<null>>;
 export function apiError(
-  errorOrMessage: unknown,
-  status = 400,
+  first: unknown,
+  status = 500,
   errors?: ApiError[],
   code?: string
 ): NextResponse<ApiResponse<null>> {
-  if (typeof errorOrMessage === "string") {
-    return NextResponse.json(
-      {
-        success: false,
-        message: errorOrMessage,
-        ...(errors && errors.length > 0 ? { errors } : {}),
-        ...(code ? { code } : {}),
-      },
-      { status }
-    );
+  if (typeof first !== "string") {
+    return apiErrorFromException(first);
   }
 
-  return handleApiError(errorOrMessage);
+  return NextResponse.json(
+    {
+      success: false,
+      message: first,
+      ...(errors && errors.length > 0 ? { errors } : {}),
+      ...(code ? { code } : {}),
+    },
+    { status }
+  );
 }
 
 export function apiUnauthorized(
@@ -160,4 +187,15 @@ export function apiConflict(
   code = "CONFLICT"
 ): NextResponse<ApiResponse<null>> {
   return apiError(message, 409, undefined, code);
+}
+
+export function apiValidationError(
+  errors: ApiError[] | string
+): NextResponse<ApiResponse<null>> {
+  return apiError(
+    "Validation failed",
+    400,
+    typeof errors === "string" ? [{ message: errors }] : errors,
+    "VALIDATION_ERROR"
+  );
 }

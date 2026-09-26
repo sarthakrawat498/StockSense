@@ -6,8 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { ArrowLeft, Plus, Trash2 } from "lucide-react";
 
-import { AppShell } from "@/components/layouts/app-shell";
-import { Button } from "@/components/ui/button";
+import { AppShell } from "@/components/layouts/app-shell";import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
@@ -116,8 +115,7 @@ export function NewOperationPage({ type }: NewOperationPageProps) {
   }
 
   return (
-    <AppShell pageTitle={config.newLabel}>
-      <div className="space-y-5 max-w-[860px]">
+    <div className="space-y-5 max-w-[860px]">
 
         {/* Page header */}
         <div className="flex items-center gap-3">
@@ -427,6 +425,5 @@ export function NewOperationPage({ type }: NewOperationPageProps) {
           </form>
         </Form>
       </div>
-    </AppShell>
   );
 }

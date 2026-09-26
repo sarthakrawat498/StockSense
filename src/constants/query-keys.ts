@@ -16,8 +16,19 @@ export const QUERY_KEYS = {
   products: {
     all: (filters?: Record<string, unknown>) => ["products", "list", filters] as const,
     detail: (id: string) => ["products", "detail", id] as const,
+    stock: (id: string) => ["products", "stock", id] as const,
     categories: () => ["products", "categories"] as const,
     units: () => ["products", "units"] as const,
+  },
+
+  reorderRules: {
+    all: (filters?: Record<string, unknown>) => ["reorderRules", "list", filters] as const,
+    detail: (id: string) => ["reorderRules", "detail", id] as const,
+  },
+
+  categories: {
+    all: () => ["categories", "list"] as const,
+    detail: (id: string) => ["categories", "detail", id] as const,
   },
 
   // ── Operations: Receipts ──────────────────────────────────────────────────
@@ -54,6 +65,12 @@ export const QUERY_KEYS = {
   // ── Move History / Stock Ledger ───────────────────────────────────────────
   stockMoves: {
     all: (filters?: Record<string, unknown>) => ["stockMoves", "list", filters] as const,
+  },
+
+  stock: {
+    all: (filters?: Record<string, unknown>) => ["stock", "list", filters] as const,
+    product: (id: string) => ["stock", "product", id] as const,
+    location: (id: string) => ["stock", "location", id] as const,
   },
 
   // ── Auth / User ───────────────────────────────────────────────────────────
