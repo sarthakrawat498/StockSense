@@ -34,6 +34,7 @@ const STATIC_TITLES: Record<string, string> = {
   "/move-history":                   "Move History",
   "/settings":                       "Settings",
   "/profile":                        "Profile",
+  "/team":                           "Team",
 };
 
 function getTitle(pathname: string): string {
