@@ -1,44 +1,35 @@
-import type { Timestamps, OperationStatus } from "@/types/common.types";
+import type { OperationStatus } from "@/types/common.types";
 
-export interface AdjustmentLine {
-  id: string;
-  productId: string;
-  productName?: string;
-  productSku?: string;
-  locationId?: string;
-  locationName?: string;
-  theoreticalQty: number;
-  countedQty: number;
-  difference: number;
+// ─── Input DTOs ──────────────────────────────────────────────────────────────
+
+export interface CreateAdjustmentInput {
+  warehouseId: string;
+  /** The location being adjusted */
+  toLocationId: string;
+  responsibleUserId: string;
+  items: Array<{
+    productId: string;
+    /** Recorded/theoretical quantity (what the system thinks is there) */
+    quantity: number;
+    /** Physical count (what is actually there) */
+    countedQuantity: number;
+  }>;
 }
 
-export interface Adjustment extends Timestamps {
-  id: string;
-  reference: string;
-  reason?: string;
-  status: OperationStatus;
-  validatedAt?: string;
-  notes?: string;
-  lines: AdjustmentLine[];
-}
-
-export interface CreateAdjustmentParams {
-  reason?: string;
-  notes?: string;
-  lines: { productId: string; locationId?: string; countedQty: number }[];
-}
-
-export interface UpdateAdjustmentParams {
-  reason?: string;
-  notes?: string;
-  lines?: { id?: string; productId: string; locationId?: string; countedQty: number }[];
+export interface UpdateAdjustmentInput {
+  toLocationId?: string;
+  items?: Array<{
+    id?: string;
+    productId: string;
+    quantity: number;
+    countedQuantity: number;
+  }>;
 }
 
 export interface AdjustmentFilters {
+  warehouseId?: string;
   status?: OperationStatus;
   search?: string;
-  dateFrom?: string;
-  dateTo?: string;
   page?: number;
   pageSize?: number;
 }

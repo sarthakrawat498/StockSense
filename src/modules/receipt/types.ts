@@ -1,48 +1,29 @@
-import type { Timestamps, OperationStatus } from "@/types/common.types";
+import type { OperationStatus } from "@/types/common.types";
 
-export interface ReceiptLine {
-  id: string;
-  productId: string;
-  productName?: string;
-  productSku?: string;
-  demandQty: number;
-  doneQty: number;
-}
+// ─── Input DTOs ──────────────────────────────────────────────────────────────
 
-export interface Receipt extends Timestamps {
-  id: string;
-  reference: string;
+export interface CreateReceiptInput {
   warehouseId: string;
-  warehouseName?: string;
-  supplierName?: string;
-  status: OperationStatus;
+  toLocationId: string;
+  contactName?: string;
+  address?: string;
   scheduledDate?: string;
-  validatedAt?: string;
-  notes?: string;
-  lines: ReceiptLine[];
+  responsibleUserId: string;
+  items: Array<{ productId: string; quantity: number }>;
 }
 
-export interface CreateReceiptParams {
-  warehouseId: string;
-  supplierName?: string;
+export interface UpdateReceiptInput {
+  contactName?: string;
+  address?: string;
   scheduledDate?: string;
-  notes?: string;
-  lines: { productId: string; demandQty: number }[];
-}
-
-export interface UpdateReceiptParams {
-  supplierName?: string;
-  scheduledDate?: string;
-  notes?: string;
-  lines?: { id?: string; productId: string; demandQty: number; doneQty?: number }[];
+  toLocationId?: string;
+  items?: Array<{ id?: string; productId: string; quantity: number }>;
 }
 
 export interface ReceiptFilters {
   warehouseId?: string;
   status?: OperationStatus;
   search?: string;
-  dateFrom?: string;
-  dateTo?: string;
   page?: number;
   pageSize?: number;
 }

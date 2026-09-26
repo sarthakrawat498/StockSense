@@ -1,8 +1,6 @@
 export { DeliveryService } from "./delivery-service";
 export type {
-  Delivery,
-  DeliveryLine,
-  CreateDeliveryParams,
-  UpdateDeliveryParams,
+  CreateDeliveryInput,
+  UpdateDeliveryInput,
   DeliveryFilters,
 } from "./types";

@@ -1,8 +1,6 @@
 export { ReceiptService } from "./receipt-service";
 export type {
-  Receipt,
-  ReceiptLine,
-  CreateReceiptParams,
-  UpdateReceiptParams,
+  CreateReceiptInput,
+  UpdateReceiptInput,
   ReceiptFilters,
 } from "./types";

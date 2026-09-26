@@ -1,48 +1,29 @@
-import type { Timestamps, OperationStatus } from "@/types/common.types";
+import type { OperationStatus } from "@/types/common.types";
 
-export interface DeliveryLine {
-  id: string;
-  productId: string;
-  productName?: string;
-  productSku?: string;
-  demandQty: number;
-  doneQty: number;
-}
+// ─── Input DTOs ──────────────────────────────────────────────────────────────
 
-export interface Delivery extends Timestamps {
-  id: string;
-  reference: string;
+export interface CreateDeliveryInput {
   warehouseId: string;
-  warehouseName?: string;
-  customerName?: string;
-  status: OperationStatus;
+  fromLocationId: string;
+  contactName?: string;
+  address?: string;
   scheduledDate?: string;
-  validatedAt?: string;
-  notes?: string;
-  lines: DeliveryLine[];
+  responsibleUserId: string;
+  items: Array<{ productId: string; quantity: number }>;
 }
 
-export interface CreateDeliveryParams {
-  warehouseId: string;
-  customerName?: string;
+export interface UpdateDeliveryInput {
+  contactName?: string;
+  address?: string;
   scheduledDate?: string;
-  notes?: string;
-  lines: { productId: string; demandQty: number }[];
-}
-
-export interface UpdateDeliveryParams {
-  customerName?: string;
-  scheduledDate?: string;
-  notes?: string;
-  lines?: { id?: string; productId: string; demandQty: number; doneQty?: number }[];
+  fromLocationId?: string;
+  items?: Array<{ id?: string; productId: string; quantity: number }>;
 }
 
 export interface DeliveryFilters {
   warehouseId?: string;
   status?: OperationStatus;
   search?: string;
-  dateFrom?: string;
-  dateTo?: string;
   page?: number;
   pageSize?: number;
 }
