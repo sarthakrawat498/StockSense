@@ -1,13 +1,16 @@
 "use client";
 
+import React, { useState, Suspense } from "react";
+
 import Link from "next/link";
-import { useForm } from "react-hook-form";
+import { useRouter, useSearchParams } from "next/navigation";
+
 import { zodResolver } from "@hookform/resolvers/zod";
 import { BarChart3 } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
 import {
   Form,
   FormControl,
@@ -16,17 +19,36 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { loginSchema, type LoginFormValues } from "@/features/auth/schemas/auth.schema";
+import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
 import { ROUTES } from "@/constants/routes";
+import { loginSchema, type LoginFormValues } from "@/features/auth/schemas/auth.schema";
+import { useAuth } from "@/providers/auth-provider";
 
-export default function LoginPage() {
+function LoginForm() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl") || ROUTES.DASHBOARD;
+  const { login } = useAuth();
+  const [serverError, setServerError] = useState<string | null>(null);
+
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: { username: "", password: "" },
   });
 
-  function onSubmit(values: LoginFormValues) {
-    // TODO: wire to auth service
+  async function onSubmit(values: LoginFormValues) {
+    setServerError(null);
+    try {
+      await login(values);
+      toast.success("Signed in successfully!");
+      router.push(callbackUrl);
+      router.refresh();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to sign in. Please try again.";
+      setServerError(message);
+      toast.error(message);
+    }
   }
 
   return (
@@ -47,6 +69,12 @@ export default function LoginPage() {
         </p>
       </div>
 
+      {serverError && (
+        <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive font-medium border border-destructive/20">
+          {serverError}
+        </div>
+      )}
+
       {/* Form */}
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -58,7 +86,7 @@ export default function LoginPage() {
                 <FormLabel className="text-sm font-medium">Username</FormLabel>
                 <FormControl>
                   <Input
-                    placeholder="Enter your username"
+                    placeholder="Enter your username or email"
                     autoComplete="username"
                     className="h-10"
                     {...field}
@@ -124,5 +152,13 @@ export default function LoginPage() {
         </Link>
       </p>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-sm text-muted-foreground">Loading...</div>}>
+      <LoginForm />
+    </Suspense>
   );
 }

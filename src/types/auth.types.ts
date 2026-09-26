@@ -1,12 +1,14 @@
+import type { UserRole } from "./common.types";
+
 /**
  * Auth-related types shared between FE and BE boundary.
  */
 export interface AuthUser {
   id: string;
+  username: string;
   email: string;
-  firstName: string;
-  lastName: string;
-  role: import("./common.types").UserRole;
+  role: UserRole;
+  warehouseId: string | null;
 }
 
 export interface TokenPair {
@@ -15,9 +17,12 @@ export interface TokenPair {
 }
 
 export interface JwtPayload {
-  sub: string;       // userId
+  sub: string; // userId
+  username: string;
   email: string;
-  role: string;
-  iat: number;
-  exp: number;
+  role: UserRole;
+  warehouseId?: string | null;
+  type: "access" | "refresh";
+  iat?: number;
+  exp?: number;
 }

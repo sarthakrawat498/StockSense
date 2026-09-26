@@ -5,11 +5,12 @@ const createJestConfig = nextJest({
 });
 
 const customJestConfig = {
+  setupFilesAfterEnv: ["<rootDir>/tests/setup.ts"],
   testEnvironment: "node",
-  testMatch: ["**/tests/**/*.test.ts"],
   moduleNameMapper: {
     "^@/(.*)$": "<rootDir>/src/$1",
   },
+  testMatch: ["<rootDir>/tests/**/*.test.ts"],
   maxWorkers: 1,
   testTimeout: 30000,
 };
