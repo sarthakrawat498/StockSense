@@ -1,7 +1,6 @@
-// ─────────────────────────────────────────────────────────────────────────────
-// StockSense — Prisma Schema
-// Database: PostgreSQL
-// ─────────────────────────────────────────────────────────────────────────────
+// StockSense canonical database schema.
+// PostgreSQL + Prisma. Domain checks that depend on operation type or values
+// (for example quantity > 0) must also be enforced in the service transaction.
 
 generator client {
   provider = "prisma-client-js"
@@ -12,11 +11,16 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ─── Enums ───────────────────────────────────────────────────────────────────
-
 enum UserRole {
-  INVENTORY_MANAGER
-  WAREHOUSE_STAFF
+  MANAGER
+  STAFF
+}
+
+enum OperationType {
+  RECEIPT
+  DELIVERY
+  TRANSFER
+  ADJUSTMENT
 }
 
 enum OperationStatus {
@@ -27,371 +31,202 @@ enum OperationStatus {
   CANCELED
 }
 
-enum OperationType {
+enum StockMovementType {
   RECEIPT
   DELIVERY
   TRANSFER
-  ADJUSTMENT
+  ADJUSTMENT_IN
+  ADJUSTMENT_OUT
 }
-
-enum StockMoveType {
-  IN       // goods received (receipt)
-  OUT      // goods dispatched (delivery)
-  TRANSFER // internal movement
-  ADJUST   // manual adjustment
-}
-
-// ─── Auth / User ─────────────────────────────────────────────────────────────
 
 model User {
-  id            String   @id @default(cuid())
-  email         String   @unique
-  hashedPassword String
-  firstName     String
-  lastName      String
-  role          UserRole @default(WAREHOUSE_STAFF)
-  isActive      Boolean  @default(true)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id           String   @id @default(uuid()) @db.Uuid
+  username     String   @unique @db.VarChar(80)
+  email        String   @unique @db.VarChar(255)
+  passwordHash String   @map("password_hash")
+  role         UserRole @default(STAFF)
+  warehouseId  String?  @map("warehouse_id") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
 
-  // Relations
-  receipts   Receipt[]
-  deliveries Delivery[]
-  transfers  Transfer[]
-  adjustments Adjustment[]
-  otpTokens  OtpToken[]
+  warehouse              Warehouse?             @relation(fields: [warehouseId], references: [id], onDelete: SetNull)
+  passwordResetOtps      PasswordResetOtp[]
+  responsibleOperations  InventoryOperation[]   @relation("OperationResponsibleUser")
+  ledgerMovements        StockLedger[]
 
+  @@index([warehouseId])
   @@map("users")
 }
 
-model OtpToken {
-  id        String   @id @default(cuid())
-  userId    String
-  token     String   @unique
-  expiresAt DateTime
-  used      Boolean  @default(false)
-  createdAt DateTime @default(now())
+model PasswordResetOtp {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  codeHash  String    @map("code_hash")
+  expiresAt DateTime  @map("expires_at")
+  usedAt    DateTime? @map("used_at")
+  createdAt DateTime  @default(now()) @map("created_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@map("otp_tokens")
+  @@index([userId, expiresAt])
+  @@map("password_reset_otps")
 }
 
-// ─── Product Catalogue ───────────────────────────────────────────────────────
+model Warehouse {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String   @unique @db.VarChar(120)
+  code      String   @unique @db.VarChar(30)
+  address   String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  users              User[]
+  locations          Location[]
+  inventoryOperations InventoryOperation[]
+
+  @@map("warehouses")
+}
+
+model Location {
+  id          String   @id @default(uuid()) @db.Uuid
+  warehouseId String   @map("warehouse_id") @db.Uuid
+  name        String   @db.VarChar(120)
+  code        String   @db.VarChar(30)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  warehouse           Warehouse             @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
+  stockBalances       StockBalance[]
+  operationsFrom      InventoryOperation[] @relation("OperationFromLocation")
+  operationsTo        InventoryOperation[] @relation("OperationToLocation")
+  ledgerMovementsFrom StockLedger[]        @relation("LedgerFromLocation")
+  ledgerMovementsTo   StockLedger[]        @relation("LedgerToLocation")
+
+  @@unique([warehouseId, code])
+  @@index([warehouseId, name])
+  @@map("locations")
+}
 
 model Category {
-  id          String  @id @default(cuid())
-  name        String  @unique
-  description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String   @unique @db.VarChar(100)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   products Product[]
 
   @@map("categories")
 }
 
-model UnitOfMeasure {
-  id        String   @id @default(cuid())
-  name      String   @unique  // e.g. "kg", "pcs", "litre"
-  symbol    String            // e.g. "kg", "pcs", "L"
-  createdAt DateTime @default(now())
-
-  products Product[]
-
-  @@map("units_of_measure")
-}
-
 model Product {
-  id           String   @id @default(cuid())
-  name         String
-  sku          String   @unique
-  description  String?
-  categoryId   String
-  unitId       String
-  reorderPoint Int      @default(0)   // trigger low-stock alert below this qty
-  isActive     Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id           String   @id @default(uuid()) @db.Uuid
+  name         String   @db.VarChar(160)
+  sku          String   @unique @db.VarChar(80)
+  categoryId   String   @map("category_id") @db.Uuid
+  uom          String   @db.VarChar(20)
+  unitCost     Decimal  @map("unit_cost") @db.Decimal(20, 6)
+  reorderPoint Decimal  @default(0) @map("reorder_point") @db.Decimal(20, 6)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
 
-  category      Category      @relation(fields: [categoryId], references: [id])
-  unit          UnitOfMeasure @relation(fields: [unitId], references: [id])
-  stockLevels   StockLevel[]
-  receiptLines  ReceiptLine[]
-  deliveryLines DeliveryLine[]
-  transferLines TransferLine[]
-  adjustmentLines AdjustmentLine[]
-  stockMoves    StockMove[]
-  reorderRules  ReorderRule[]
+  category        Category                 @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  stockBalances   StockBalance[]
+  operationItems  InventoryOperationItem[]
+  ledgerMovements StockLedger[]
 
+  @@index([categoryId])
+  @@index([name])
   @@map("products")
 }
 
-// ─── Warehouse / Location ─────────────────────────────────────────────────────
+model StockBalance {
+  id          String   @id @default(uuid()) @db.Uuid
+  productId   String   @map("product_id") @db.Uuid
+  locationId  String   @map("location_id") @db.Uuid
+  onHandQty   Decimal  @default(0) @map("on_hand_qty") @db.Decimal(20, 6)
+  reservedQty Decimal  @default(0) @map("reserved_qty") @db.Decimal(20, 6)
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
-model Warehouse {
-  id          String   @id @default(cuid())
-  name        String   @unique
-  code        String   @unique
-  address     String?
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  locations  Location[]
-  receipts   Receipt[]
-  deliveries Delivery[]
-  transfersFrom Transfer[] @relation("TransferFromWarehouse")
-  transfersTo   Transfer[] @relation("TransferToWarehouse")
-
-  @@map("warehouses")
-}
-
-model Location {
-  id          String   @id @default(cuid())
-  name        String
-  code        String
-  warehouseId String
-  parentId    String?   // supports nested locations (Rack A → Shelf 1)
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  warehouse     Warehouse    @relation(fields: [warehouseId], references: [id])
-  parent        Location?    @relation("LocationHierarchy", fields: [parentId], references: [id])
-  children      Location[]   @relation("LocationHierarchy")
-  stockLevels   StockLevel[]
-  movesFrom     StockMove[]  @relation("MoveFromLocation")
-  movesTo       StockMove[]  @relation("MoveToLocation")
-
-  @@unique([warehouseId, code])
-  @@map("locations")
-}
-
-// ─── Stock Levels ─────────────────────────────────────────────────────────────
-
-/// Current on-hand quantity for a product at a specific location.
-/// Updated automatically by service layer on each validated operation.
-model StockLevel {
-  id         String   @id @default(cuid())
-  productId  String
-  locationId String
-  quantity   Decimal  @default(0) @db.Decimal(12, 4)
-  updatedAt  DateTime @updatedAt
-
-  product  Product  @relation(fields: [productId], references: [id])
-  location Location @relation(fields: [locationId], references: [id])
+  product  Product  @relation(fields: [productId], references: [id], onDelete: Restrict)
+  location Location @relation(fields: [locationId], references: [id], onDelete: Restrict)
 
   @@unique([productId, locationId])
-  @@map("stock_levels")
+  @@index([locationId])
+  @@map("stock_balances")
 }
 
-// ─── Reorder Rules ────────────────────────────────────────────────────────────
+model InventoryOperation {
+  id                String          @id @default(uuid()) @db.Uuid
+  reference         String          @unique @db.VarChar(30)
+  type              OperationType
+  status            OperationStatus @default(DRAFT)
+  warehouseId       String          @map("warehouse_id") @db.Uuid
+  fromLocationId    String?         @map("from_location_id") @db.Uuid
+  toLocationId      String?         @map("to_location_id") @db.Uuid
+  contactName       String?         @map("contact_name") @db.VarChar(160)
+  address           String?
+  scheduledDate     DateTime?       @map("scheduled_date")
+  responsibleUserId String          @map("responsible_user_id") @db.Uuid
+  validatedAt       DateTime?       @map("validated_at")
+  canceledAt        DateTime?       @map("canceled_at")
+  createdAt         DateTime        @default(now()) @map("created_at")
+  updatedAt         DateTime        @updatedAt @map("updated_at")
 
-model ReorderRule {
-  id              String  @id @default(cuid())
-  productId       String
-  minQty          Decimal @db.Decimal(12, 4)
-  maxQty          Decimal @db.Decimal(12, 4)
-  isActive        Boolean @default(true)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  warehouse       Warehouse                @relation(fields: [warehouseId], references: [id], onDelete: Restrict)
+  fromLocation    Location?                @relation("OperationFromLocation", fields: [fromLocationId], references: [id], onDelete: Restrict)
+  toLocation      Location?                @relation("OperationToLocation", fields: [toLocationId], references: [id], onDelete: Restrict)
+  responsibleUser User                     @relation("OperationResponsibleUser", fields: [responsibleUserId], references: [id], onDelete: Restrict)
+  items           InventoryOperationItem[]
+  ledgerEntries   StockLedger[]
 
-  product Product @relation(fields: [productId], references: [id])
-
-  @@map("reorder_rules")
+  @@index([warehouseId, status])
+  @@index([type, status])
+  @@index([fromLocationId])
+  @@index([toLocationId])
+  @@index([responsibleUserId])
+  @@map("inventory_operations")
 }
 
-// ─── Operations: Receipt (Incoming Goods) ─────────────────────────────────────
+model InventoryOperationItem {
+  id             String   @id @default(uuid()) @db.Uuid
+  operationId    String   @map("operation_id") @db.Uuid
+  productId      String   @map("product_id") @db.Uuid
+  quantity       Decimal  @db.Decimal(20, 6)
+  countedQuantity Decimal? @map("counted_quantity") @db.Decimal(20, 6)
+  createdAt      DateTime @default(now()) @map("created_at")
 
-model Receipt {
-  id            String          @id @default(cuid())
-  reference     String          @unique   // auto-generated e.g. "REC/2024/0001"
-  warehouseId   String
-  supplierId    String?         // optional until supplier module added
-  supplierName  String?
-  status        OperationStatus @default(DRAFT)
-  scheduledDate DateTime?
-  validatedAt   DateTime?
-  validatedById String?
-  notes         String?
-  createdById   String
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
+  operation    InventoryOperation @relation(fields: [operationId], references: [id], onDelete: Cascade)
+  product      Product            @relation(fields: [productId], references: [id], onDelete: Restrict)
+  ledgerEntries StockLedger[]
 
-  warehouse   Warehouse     @relation(fields: [warehouseId], references: [id])
-  createdBy   User          @relation(fields: [createdById], references: [id])
-  lines       ReceiptLine[]
-  stockMoves  StockMove[]
-
-  @@map("receipts")
-}
-
-model ReceiptLine {
-  id         String   @id @default(cuid())
-  receiptId  String
-  productId  String
-  demandQty  Decimal  @db.Decimal(12, 4)
-  doneQty    Decimal  @default(0) @db.Decimal(12, 4)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  receipt Receipt @relation(fields: [receiptId], references: [id], onDelete: Cascade)
-  product Product @relation(fields: [productId], references: [id])
-
-  @@map("receipt_lines")
-}
-
-// ─── Operations: Delivery (Outgoing Goods) ────────────────────────────────────
-
-model Delivery {
-  id             String          @id @default(cuid())
-  reference      String          @unique   // e.g. "DEL/2024/0001"
-  warehouseId    String
-  customerName   String?
-  status         OperationStatus @default(DRAFT)
-  scheduledDate  DateTime?
-  validatedAt    DateTime?
-  validatedById  String?
-  notes          String?
-  createdById    String
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
-
-  warehouse  Warehouse      @relation(fields: [warehouseId], references: [id])
-  createdBy  User           @relation(fields: [createdById], references: [id])
-  lines      DeliveryLine[]
-  stockMoves StockMove[]
-
-  @@map("deliveries")
-}
-
-model DeliveryLine {
-  id          String   @id @default(cuid())
-  deliveryId  String
-  productId   String
-  demandQty   Decimal  @db.Decimal(12, 4)
-  doneQty     Decimal  @default(0) @db.Decimal(12, 4)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  delivery Delivery @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
-  product  Product  @relation(fields: [productId], references: [id])
-
-  @@map("delivery_lines")
-}
-
-// ─── Operations: Internal Transfer ────────────────────────────────────────────
-
-model Transfer {
-  id              String          @id @default(cuid())
-  reference       String          @unique   // e.g. "INT/2024/0001"
-  fromWarehouseId String
-  toWarehouseId   String
-  fromLocationId  String?
-  toLocationId    String?
-  status          OperationStatus @default(DRAFT)
-  scheduledDate   DateTime?
-  validatedAt     DateTime?
-  validatedById   String?
-  notes           String?
-  createdById     String
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
-
-  fromWarehouse Warehouse      @relation("TransferFromWarehouse", fields: [fromWarehouseId], references: [id])
-  toWarehouse   Warehouse      @relation("TransferToWarehouse",   fields: [toWarehouseId],   references: [id])
-  createdBy     User           @relation(fields: [createdById], references: [id])
-  lines         TransferLine[]
-  stockMoves    StockMove[]
-
-  @@map("transfers")
-}
-
-model TransferLine {
-  id          String   @id @default(cuid())
-  transferId  String
-  productId   String
-  demandQty   Decimal  @db.Decimal(12, 4)
-  doneQty     Decimal  @default(0) @db.Decimal(12, 4)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  transfer Transfer @relation(fields: [transferId], references: [id], onDelete: Cascade)
-  product  Product  @relation(fields: [productId], references: [id])
-
-  @@map("transfer_lines")
-}
-
-// ─── Operations: Inventory Adjustment ────────────────────────────────────────
-
-model Adjustment {
-  id            String          @id @default(cuid())
-  reference     String          @unique   // e.g. "ADJ/2024/0001"
-  warehouseId   String?
-  reason        String?
-  status        OperationStatus @default(DRAFT)
-  validatedAt   DateTime?
-  validatedById String?
-  notes         String?
-  createdById   String
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
-
-  createdBy  User             @relation(fields: [createdById], references: [id])
-  lines      AdjustmentLine[]
-  stockMoves StockMove[]
-
-  @@map("adjustments")
-}
-
-model AdjustmentLine {
-  id            String   @id @default(cuid())
-  adjustmentId  String
-  productId     String
-  locationId    String?
-  theoreticalQty Decimal @db.Decimal(12, 4)  // qty in system before adjustment
-  countedQty    Decimal  @db.Decimal(12, 4)   // qty counted physically
-  difference    Decimal  @db.Decimal(12, 4)   // countedQty - theoreticalQty
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  adjustment Adjustment @relation(fields: [adjustmentId], references: [id], onDelete: Cascade)
-  product    Product    @relation(fields: [productId], references: [id])
-
-  @@map("adjustment_lines")
-}
-
-// ─── Stock Ledger (Immutable Move History) ────────────────────────────────────
-
-/// Every validated stock movement is recorded here. This is an append-only
-/// ledger — rows are never updated or deleted after creation.
-model StockMove {
-  id             String        @id @default(cuid())
-  productId      String
-  fromLocationId String?
-  toLocationId   String?
-  quantity       Decimal       @db.Decimal(12, 4)
-  type           StockMoveType
-  reference      String        // e.g. "REC/2024/0001"
-  operationType  OperationType
-  // Polymorphic operation refs (only one will be set)
-  receiptId      String?
-  deliveryId     String?
-  transferId     String?
-  adjustmentId   String?
-  createdAt      DateTime      @default(now())
-
-  product      Product   @relation(fields: [productId], references: [id])
-  fromLocation Location? @relation("MoveFromLocation", fields: [fromLocationId], references: [id])
-  toLocation   Location? @relation("MoveToLocation",   fields: [toLocationId],   references: [id])
-  receipt      Receipt?  @relation(fields: [receiptId],  references: [id])
-  delivery     Delivery? @relation(fields: [deliveryId], references: [id])
-  transfer     Transfer? @relation(fields: [transferId], references: [id])
-  adjustment   Adjustment? @relation(fields: [adjustmentId], references: [id])
-
+  @@unique([operationId, productId])
   @@index([productId])
-  @@index([reference])
-  @@index([createdAt])
-  @@map("stock_moves")
+  @@map("inventory_operation_items")
+}
+
+model StockLedger {
+  id              String            @id @default(uuid()) @db.Uuid
+  operationId     String            @map("operation_id") @db.Uuid
+  operationItemId String            @map("operation_item_id") @db.Uuid
+  productId       String            @map("product_id") @db.Uuid
+  fromLocationId  String?           @map("from_location_id") @db.Uuid
+  toLocationId    String?           @map("to_location_id") @db.Uuid
+  quantity        Decimal           @db.Decimal(20, 6)
+  movementType    StockMovementType @map("movement_type")
+  performedById   String            @map("performed_by_id") @db.Uuid
+  movedAt         DateTime          @default(now()) @map("moved_at")
+
+  operation     InventoryOperation     @relation(fields: [operationId], references: [id], onDelete: Restrict)
+  operationItem InventoryOperationItem @relation(fields: [operationItemId], references: [id], onDelete: Restrict)
+  product       Product                @relation(fields: [productId], references: [id], onDelete: Restrict)
+  fromLocation  Location?              @relation("LedgerFromLocation", fields: [fromLocationId], references: [id], onDelete: Restrict)
+  toLocation    Location?              @relation("LedgerToLocation", fields: [toLocationId], references: [id], onDelete: Restrict)
+  performedBy   User                   @relation(fields: [performedById], references: [id], onDelete: Restrict)
+
+  @@index([productId, movedAt])
+  @@index([operationId])
+  @@index([fromLocationId, movedAt])
+  @@index([toLocationId, movedAt])
+  @@index([performedById])
+  @@map("stock_ledger")
 }
