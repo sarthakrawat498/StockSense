@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { AlertTriangle, ArrowRightLeft, FileText, Package, PackageMinus, PackagePlus, TrendingUp } from "lucide-react";
 
 import { useDashboard } from "@/features/dashboard/hooks/use-dashboard";
@@ -10,21 +11,21 @@ import { WelcomeBanner } from "./welcome-banner";
 // ─── KPI definitions ──────────────────────────────────────────────────────────
 
 const KPI_DEFINITIONS = [
-  { label: "Total Products",      sub: "across all categories", icon: Package,       accent: "bg-blue-500/10",   iconColor: "text-blue-500"   },
-  { label: "Pending Receipts",    sub: "awaiting validation",   icon: PackagePlus,   accent: "bg-emerald-500/10",iconColor: "text-emerald-500" },
-  { label: "Pending Deliveries",  sub: "ready to dispatch",     icon: PackageMinus,  accent: "bg-orange-500/10", iconColor: "text-orange-500"  },
-  { label: "Low Stock Items",     sub: "below threshold",       icon: AlertTriangle, accent: "bg-amber-500/10",  iconColor: "text-amber-500"   },
-  { label: "Transfers Scheduled", sub: "internal movements",    icon: ArrowRightLeft,accent: "bg-violet-500/10", iconColor: "text-violet-500"  },
+  { label: "Total Products",      sub: "across all categories", icon: Package,       accent: "bg-blue-500/10",   iconColor: "text-blue-500",   href: "/products" },
+  { label: "Pending Receipts",    sub: "awaiting validation",   icon: PackagePlus,   accent: "bg-emerald-500/10",iconColor: "text-emerald-500", href: "/receipts" },
+  { label: "Pending Deliveries",  sub: "ready to dispatch",     icon: PackageMinus,  accent: "bg-orange-500/10", iconColor: "text-orange-500",  href: "/deliveries" },
+  { label: "Low Stock Items",     sub: "below threshold",       icon: AlertTriangle, accent: "bg-amber-500/10",  iconColor: "text-amber-500",   href: "#low-stock-alerts" },
+  { label: "Transfers Scheduled", sub: "internal movements",    icon: ArrowRightLeft,accent: "bg-violet-500/10", iconColor: "text-violet-500",  href: "/transfers" },
 ] as const;
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-function KpiCard({ label, value, sub, icon: Icon, accent, iconColor }: Readonly<{
+function KpiCard({ label, value, sub, icon: Icon, accent, iconColor, href }: Readonly<{
   label: string; value: string | number; sub: string;
-  icon: React.ElementType; accent: string; iconColor: string;
+  icon: React.ElementType; accent: string; iconColor: string; href?: string;
 }>) {
-  return (
-    <div className="glass-card rounded-xl p-5">
+  const content = (
+    <div className="glass-card rounded-xl p-5 hover:border-primary/40 transition-colors h-full">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="truncate text-[11px] font-medium uppercase tracking-wider text-muted-foreground">{label}</p>
@@ -37,14 +38,16 @@ function KpiCard({ label, value, sub, icon: Icon, accent, iconColor }: Readonly<
       </div>
     </div>
   );
+
+  return href ? <Link href={href} className="block">{content}</Link> : content;
 }
 
-function OperationCard({ title, icon: Icon, iconColor, value, label }: Readonly<{
+function OperationCard({ title, icon: Icon, iconColor, value, label, href }: Readonly<{
   title: string; icon: React.ElementType; iconColor: string;
-  value: string | number; label: string;
+  value: string | number; label: string; href?: string;
 }>) {
-  return (
-    <div className="glass-card rounded-xl p-5">
+  const content = (
+    <div className="glass-card rounded-xl p-5 hover:border-primary/40 transition-colors h-full">
       <div className="mb-5 flex items-center gap-2.5">
         <Icon className={`h-4 w-4 ${iconColor}`} />
         <span className="text-sm font-semibold">{title}</span>
@@ -56,6 +59,8 @@ function OperationCard({ title, icon: Icon, iconColor, value, label }: Readonly<
       <Separator className="dark:opacity-20" />
     </div>
   );
+
+  return href ? <Link href={href} className="block">{content}</Link> : content;
 }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
@@ -99,14 +104,14 @@ export default function DashboardPage() {
       <section>
         <p className="mb-3 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Operations</p>
         <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
-          <OperationCard title="Receipts"  icon={PackagePlus}   iconColor="text-emerald-500" value={kpis?.pendingReceipts    ?? "—"} label="pending"   />
-          <OperationCard title="Deliveries"icon={PackageMinus}  iconColor="text-orange-500"  value={kpis?.pendingDeliveries  ?? "—"} label="pending"   />
-          <OperationCard title="Transfers" icon={ArrowRightLeft}iconColor="text-violet-500"  value={kpis?.scheduledTransfers ?? "—"} label="scheduled" />
+          <OperationCard title="Receipts"  icon={PackagePlus}   iconColor="text-emerald-500" value={kpis?.pendingReceipts    ?? "—"} label="pending"   href="/receipts" />
+          <OperationCard title="Deliveries"icon={PackageMinus}  iconColor="text-orange-500"  value={kpis?.pendingDeliveries  ?? "—"} label="pending"   href="/deliveries" />
+          <OperationCard title="Transfers" icon={ArrowRightLeft}iconColor="text-violet-500"  value={kpis?.scheduledTransfers ?? "—"} label="scheduled" href="/transfers" />
         </div>
       </section>
 
       {/* Low stock alerts */}
-      <section>
+      <section id="low-stock-alerts">
         <div className="mb-3 flex items-center justify-between">
           <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Low Stock Alerts</p>
           <span className="text-xs text-muted-foreground">{alerts.length} item{alerts.length === 1 ? "" : "s"}</span>

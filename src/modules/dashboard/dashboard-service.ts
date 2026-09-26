@@ -11,6 +11,7 @@ export class DashboardService {
 			where: filters.categoryId ? { categoryId: filters.categoryId } : undefined,
 			select: {
 				reorderPoint: true,
+				reorderRule: { select: { minQty: true, isActive: true } },
 				stockBalances: {
 					where: filters.warehouseId
 						? { location: { warehouseId: filters.warehouseId } }
@@ -30,10 +31,12 @@ export class DashboardService {
                 0,
             );
             const reorderPoint = numeric(product.reorderPoint);
+            const activeRule = product.reorderRule?.isActive ? product.reorderRule : null;
+            const effectiveThreshold = activeRule ? numeric(activeRule.minQty) : reorderPoint;
 
             if (currentStock > 0) totalProductsInStock += 1;
             if (currentStock <= 0) outOfStockItems += 1;
-            else if (currentStock <= reorderPoint) lowStockItems += 1;
+            if (currentStock <= effectiveThreshold) lowStockItems += 1;
         }
 
         const operationWhere = {
@@ -53,7 +56,7 @@ export class DashboardService {
 			prisma.inventoryOperation.count({ where: { ...pendingWhere, type: OperationType.RECEIPT } }),
 			prisma.inventoryOperation.count({ where: { ...pendingWhere, type: OperationType.DELIVERY } }),
 			prisma.inventoryOperation.count({
-				where: { ...pendingWhere, type: OperationType.TRANSFER, scheduledDate: { not: null } },
+				where: { ...pendingWhere, type: OperationType.TRANSFER },
 			}),
 		]);
 
