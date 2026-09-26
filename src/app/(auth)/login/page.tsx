@@ -36,9 +36,7 @@ export default function LoginPage() {
 
       // Role guard — if manager toggle is checked, ensure the account is MANAGER
       if (isManagerLogin && user.role !== "MANAGER") {
-        // Undo login — clear state
         toast.error("Access denied. This account does not have manager privileges.");
-        // Log out in background to clear cookies
         fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
         return;
       }

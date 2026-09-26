@@ -2,9 +2,8 @@
 
 import { ThemeProvider } from "next-themes";
 import { Toaster } from "sonner";
-
-import { AuthProvider } from "./auth-provider";
 import { QueryProvider } from "./query-provider";
+import { AuthProvider } from "./auth-provider";
 
 /**
  * Composes all global providers.

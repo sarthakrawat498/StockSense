@@ -110,7 +110,7 @@ export const authClient = {
    */
   async getMe(): Promise<AuthUser | null> {
     try {
-      return await request<AuthUser>(API.AUTH.ME, {
+      return await request<AuthUser>(API.USERS.ME, {
         method: "GET",
       });
     } catch {

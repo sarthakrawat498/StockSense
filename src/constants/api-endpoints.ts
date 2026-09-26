@@ -11,7 +11,6 @@ export const API = {
     REFRESH: "/api/auth/refresh",
     RESET_PASSWORD_REQUEST: "/api/auth/reset-password/request",
     RESET_PASSWORD_CONFIRM: "/api/auth/reset-password/confirm",
-    ME: "/api/auth/me",
   },
 
   // ── Users ─────────────────────────────────────────────────────────────────
@@ -24,6 +23,10 @@ export const API = {
   // ── Dashboard ─────────────────────────────────────────────────────────────
   DASHBOARD: {
     KPIS: "/api/dashboard",
+  },
+
+  ALERTS: {
+    LOW_STOCK: "/api/alerts/low-stock",
   },
 
   // ── Products ──────────────────────────────────────────────────────────────
@@ -51,6 +54,7 @@ export const API = {
     BASE: "/api/operations/receipts",
     BY_ID: (id: string) => `/api/operations/receipts/${id}`,
     CONFIRM: (id: string) => `/api/operations/receipts/${id}/confirm`,
+    VALIDATE: (id: string) => `/api/operations/receipts/${id}/validate`,
     CANCEL: (id: string) => `/api/operations/receipts/${id}/cancel`,
   },
 
@@ -58,6 +62,7 @@ export const API = {
     BASE: "/api/operations/deliveries",
     BY_ID: (id: string) => `/api/operations/deliveries/${id}`,
     CONFIRM: (id: string) => `/api/operations/deliveries/${id}/confirm`,
+    VALIDATE: (id: string) => `/api/operations/deliveries/${id}/validate`,
     CANCEL: (id: string) => `/api/operations/deliveries/${id}/cancel`,
   },
 
@@ -65,6 +70,7 @@ export const API = {
     BASE: "/api/operations/transfers",
     BY_ID: (id: string) => `/api/operations/transfers/${id}`,
     CONFIRM: (id: string) => `/api/operations/transfers/${id}/confirm`,
+    VALIDATE: (id: string) => `/api/operations/transfers/${id}/validate`,
     CANCEL: (id: string) => `/api/operations/transfers/${id}/cancel`,
   },
 
@@ -72,6 +78,7 @@ export const API = {
     BASE: "/api/operations/adjustments",
     BY_ID: (id: string) => `/api/operations/adjustments/${id}`,
     CONFIRM: (id: string) => `/api/operations/adjustments/${id}/confirm`,
+    VALIDATE: (id: string) => `/api/operations/adjustments/${id}/validate`,
     CANCEL: (id: string) => `/api/operations/adjustments/${id}/cancel`,
   },
 
@@ -80,6 +87,10 @@ export const API = {
     BASE: "/api/warehouses",
     BY_ID: (id: string) => `/api/warehouses/${id}`,
     LOCATIONS: (id: string) => `/api/warehouses/${id}/locations`,
+  },
+
+  LOCATIONS: {
+    BY_ID: (id: string) => `/api/locations/${id}`,
   },
 
   // ── Stock Ledger ─────────────────────────────────────────────────────────
