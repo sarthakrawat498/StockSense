@@ -5,4 +5,5 @@ export type {
   CreateWarehouseParams,
   UpdateWarehouseParams,
   CreateLocationParams,
+  UpdateLocationParams,
 } from "./types";
