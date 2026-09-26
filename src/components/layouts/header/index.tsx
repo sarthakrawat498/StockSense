@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Moon, Sun, User, LogOut, ChevronDown } from "lucide-react";
 import { useTheme } from "next-themes";
@@ -13,6 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { useAuth } from "@/providers/auth-provider";
 
 // ─── Pathname → title mapping ─────────────────────────────────────────────────
 
@@ -47,13 +49,20 @@ function getTitle(pathname: string): string {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export function Header({ title }: { title?: string } = {}) {
+export function Header() {
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
+  const { user, logout } = useAuth();
+
+  // Prefer firstName, fall back to username
+  const displayName = user?.firstName ?? user?.username ?? "";
+  const initials = user?.firstName && user?.lastName
+    ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
+    : displayName.slice(0, 2).toUpperCase() || "U";
 
   return (
     <header className="flex h-14 flex-shrink-0 items-center justify-between border-b px-6 bg-background/80 backdrop-blur-sm dark:border-white/[0.07] dark:[background:rgba(10,10,10,0.65)] dark:[backdrop-filter:blur(20px)]">
-      <h1 className="text-sm font-semibold">{title ?? getTitle(pathname)}</h1>
+      <h1 className="text-sm font-semibold">{getTitle(pathname)}</h1>
 
       <div className="flex items-center gap-2">
         <Button
@@ -71,17 +80,34 @@ export function Header({ title }: { title?: string } = {}) {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="h-8 gap-2 px-2 text-sm">
               <Avatar className="h-6 w-6">
-                <AvatarFallback className="text-[10px] font-semibold bg-primary/10 text-primary">U</AvatarFallback>
+                <AvatarFallback className="text-[10px] font-semibold bg-primary/10 text-primary">
+                  {initials}
+                </AvatarFallback>
               </Avatar>
+              <span className="text-xs font-medium hidden sm:block">{displayName}</span>
               <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-44">
-            <DropdownMenuItem className="gap-2 text-sm">
-              <User className="h-3.5 w-3.5" />Profile
+            <div className="px-2 py-1.5">
+              <p className="text-xs font-semibold">
+                {user?.firstName && user?.lastName
+                  ? `${user.firstName} ${user.lastName}`
+                  : user?.username}
+              </p>
+              <p className="text-[11px] text-muted-foreground truncate">{user?.email}</p>
+            </div>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Link href="/profile" className="gap-2 text-sm cursor-pointer">
+                <User className="h-3.5 w-3.5" />Profile
+              </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="gap-2 text-sm text-destructive focus:text-destructive">
+            <DropdownMenuItem
+              className="gap-2 text-sm text-destructive focus:text-destructive cursor-pointer"
+              onClick={() => logout()}
+            >
               <LogOut className="h-3.5 w-3.5" />Sign out
             </DropdownMenuItem>
           </DropdownMenuContent>

@@ -36,6 +36,8 @@ export function sanitizeUser(user: {
   id: string;
   username: string;
   email: string;
+  firstName: string | null;
+  lastName: string | null;
   role: UserRole;
   warehouseId: string | null;
 }): AuthUser {
@@ -43,6 +45,8 @@ export function sanitizeUser(user: {
     id: user.id,
     username: user.username,
     email: user.email,
+    firstName: user.firstName,
+    lastName: user.lastName,
     role: user.role,
     warehouseId: user.warehouseId,
   };

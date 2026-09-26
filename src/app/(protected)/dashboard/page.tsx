@@ -12,6 +12,10 @@ const KPI_DEFINITIONS = [
 	{ label: "Low Stock Items", sub: "below threshold", icon: AlertTriangle, accent: "bg-amber-500/10", iconColor: "text-amber-500" },
 	{ label: "Transfers Scheduled", sub: "internal movements", icon: ArrowRightLeft, accent: "bg-violet-500/10", iconColor: "text-violet-500" },
 ] as const;
+// ─── Welcome banner (client — needs useAuth) ──────────────────────────────────
+import { WelcomeBanner } from "./welcome-banner";
+
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 function KpiCard({ label, value, sub, icon: Icon, accent, iconColor }: Readonly<{ label: string; value: string | number; sub: string; icon: React.ElementType; accent: string; iconColor: string }>) {
 	return <div className="glass-card rounded-xl p-5"><div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="truncate text-[11px] font-medium uppercase tracking-wider text-muted-foreground">{label}</p><p className="mt-2 text-2xl font-semibold tracking-tight">{value}</p><p className="mt-0.5 truncate text-[11px] text-muted-foreground">{sub}</p></div><div className={`rounded-lg p-2.5 ${accent}`}><Icon className={`h-4 w-4 ${iconColor}`} /></div></div></div>;
