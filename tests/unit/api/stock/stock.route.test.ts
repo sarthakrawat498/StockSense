@@ -26,8 +26,11 @@ const row: StockBalanceRow = {
 	isLowStock: false,
 };
 
-const service = { list: jest.fn(), getByLocation: jest.fn() };
-jest.mock("@/modules/stock-ledger", () => ({ StockReadService: jest.fn(() => service) }));
+var mockService: { list: jest.Mock; getByLocation: jest.Mock };
+jest.mock("@/modules/stock-ledger", () => {
+	mockService = { list: jest.fn(), getByLocation: jest.fn() };
+	return { StockReadService: jest.fn(() => mockService) };
+});
 
 import { GET as getStock } from "@/app/api/stock/route";
 import { GET as getLocationStock } from "@/app/api/locations/[id]/stock/route";
@@ -44,8 +47,8 @@ async function body(response: Response) { return response.json(); }
 describe("stock read APIs", () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
-		service.list.mockResolvedValue(page);
-		service.getByLocation.mockResolvedValue([row]);
+		mockService.list.mockResolvedValue(page);
+		mockService.getByLocation.mockResolvedValue([row]);
 	});
 
 	it("lists stock balances", async () => {
@@ -56,7 +59,7 @@ describe("stock read APIs", () => {
 
 	it("passes all supported filters to the service", async () => {
 		await getStock(request(`?productId=${productId}&warehouseId=${warehouseId}&locationId=${locationId}&categoryId=${categoryId}&search=laptop&lowStock=true&page=2&pageSize=10`));
-		expect(service.list).toHaveBeenCalledWith({ productId, warehouseId, locationId, categoryId, search: "laptop", lowStock: true, page: 2, pageSize: 10 });
+		expect(mockService.list).toHaveBeenCalledWith({ productId, warehouseId, locationId, categoryId, search: "laptop", lowStock: true, page: 2, pageSize: 10 });
 	});
 
 	it.each([
@@ -70,11 +73,11 @@ describe("stock read APIs", () => {
 	])("rejects invalid query %s", async (query) => {
 		const response = await getStock(request(query));
 		expect(response.status).toBe(400);
-		expect(service.list).not.toHaveBeenCalled();
+		expect(mockService.list).not.toHaveBeenCalled();
 	});
 
 	it("returns 500 when global stock lookup fails", async () => {
-		service.list.mockRejectedValueOnce(new Error("database unavailable"));
+		mockService.list.mockRejectedValueOnce(new Error("database unavailable"));
 		const response = await getStock(request());
 		expect(response.status).toBe(500);
 	});
@@ -83,17 +86,17 @@ describe("stock read APIs", () => {
 		const response = await getLocationStock(request(), context(locationId));
 		expect(response.status).toBe(200);
 		expect((await body(response)).data).toEqual([row]);
-		expect(service.getByLocation).toHaveBeenCalledWith(locationId);
+		expect(mockService.getByLocation).toHaveBeenCalledWith(locationId);
 	});
 
 	it("rejects an invalid location UUID", async () => {
 		const response = await getLocationStock(request(), context("bad-id"));
 		expect(response.status).toBe(400);
-		expect(service.getByLocation).not.toHaveBeenCalled();
+		expect(mockService.getByLocation).not.toHaveBeenCalled();
 	});
 
 	it("returns 404 for an unknown location", async () => {
-		service.getByLocation.mockRejectedValueOnce(new NotFoundError("Location not found"));
+		mockService.getByLocation.mockRejectedValueOnce(new NotFoundError("Location not found"));
 		const response = await getLocationStock(request(), context(missingId));
 		expect(response.status).toBe(404);
 	});

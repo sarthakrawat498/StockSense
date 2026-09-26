@@ -27,20 +27,30 @@ const sampleLocation: Location = {
   updatedAt: "2026-09-26T00:00:00.000Z",
 };
 
-const service = {
-  list: jest.fn(),
-  create: jest.fn(),
-  getById: jest.fn(),
-  update: jest.fn(),
-  createLocation: jest.fn(),
-  listLocationsByWarehouse: jest.fn(),
-  getLocationById: jest.fn(),
-  updateLocation: jest.fn(),
+var mockService: {
+  list: jest.Mock;
+  create: jest.Mock;
+  getById: jest.Mock;
+  update: jest.Mock;
+  createLocation: jest.Mock;
+  listLocationsByWarehouse: jest.Mock;
+  getLocationById: jest.Mock;
+  updateLocation: jest.Mock;
 };
 
-jest.mock("@/modules/warehouse", () => ({
-  WarehouseService: jest.fn(() => service),
-}));
+jest.mock("@/modules/warehouse", () => {
+  mockService = {
+    list: jest.fn(),
+    create: jest.fn(),
+    getById: jest.fn(),
+    update: jest.fn(),
+    createLocation: jest.fn(),
+    listLocationsByWarehouse: jest.fn(),
+    getLocationById: jest.fn(),
+    updateLocation: jest.fn(),
+  };
+  return { WarehouseService: jest.fn(() => mockService) };
+});
 
 import { GET as listWarehouses, POST as createWarehouse } from "@/app/api/warehouses/route";
 import {
@@ -75,14 +85,14 @@ async function json(response: Response) {
 describe("warehouse and location API routes", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    service.list.mockResolvedValue([sampleWarehouse]);
-    service.create.mockResolvedValue(sampleWarehouse);
-    service.getById.mockResolvedValue(sampleWarehouse);
-    service.update.mockResolvedValue(sampleWarehouse);
-    service.createLocation.mockResolvedValue(sampleLocation);
-    service.listLocationsByWarehouse.mockResolvedValue([sampleLocation]);
-    service.getLocationById.mockResolvedValue(sampleLocation);
-    service.updateLocation.mockResolvedValue(sampleLocation);
+    mockService.list.mockResolvedValue([sampleWarehouse]);
+    mockService.create.mockResolvedValue(sampleWarehouse);
+    mockService.getById.mockResolvedValue(sampleWarehouse);
+    mockService.update.mockResolvedValue(sampleWarehouse);
+    mockService.createLocation.mockResolvedValue(sampleLocation);
+    mockService.listLocationsByWarehouse.mockResolvedValue([sampleLocation]);
+    mockService.getLocationById.mockResolvedValue(sampleLocation);
+    mockService.updateLocation.mockResolvedValue(sampleLocation);
   });
 
   describe("GET /api/warehouses", () => {
@@ -90,11 +100,11 @@ describe("warehouse and location API routes", () => {
       const response = await listWarehouses();
       expect(response.status).toBe(200);
       expect(await json(response)).toEqual({ success: true, data: [sampleWarehouse] });
-      expect(service.list).toHaveBeenCalledTimes(1);
+      expect(mockService.list).toHaveBeenCalledTimes(1);
     });
 
     it("returns 500 when the service fails", async () => {
-      service.list.mockRejectedValueOnce(new Error("database unavailable"));
+      mockService.list.mockRejectedValueOnce(new Error("database unavailable"));
       const response = await listWarehouses();
       expect(response.status).toBe(500);
       expect((await json(response)).success).toBe(false);
@@ -109,7 +119,7 @@ describe("warehouse and location API routes", () => {
         address: "45 Industrial Road",
       }));
       expect(response.status).toBe(201);
-      expect(service.create).toHaveBeenCalledWith({
+      expect(mockService.create).toHaveBeenCalledWith({
         name: "Central Warehouse",
         code: "WH-CENTRAL",
         address: "45 Industrial Road",
@@ -128,7 +138,7 @@ describe("warehouse and location API routes", () => {
     ])("returns 400 for %s", async (body, _label) => {
       const response = await createWarehouse(request("POST", body));
       expect(response.status).toBe(400);
-      expect(service.create).not.toHaveBeenCalled();
+      expect(mockService.create).not.toHaveBeenCalled();
     });
 
     it("returns 400 for malformed JSON", async () => {
@@ -138,7 +148,7 @@ describe("warehouse and location API routes", () => {
     });
 
     it("returns 409 for a duplicate warehouse", async () => {
-      service.create.mockRejectedValueOnce(new ConflictError("Duplicate warehouse"));
+      mockService.create.mockRejectedValueOnce(new ConflictError("Duplicate warehouse"));
       const response = await createWarehouse(request("POST", {
         name: sampleWarehouse.name,
         code: sampleWarehouse.code,
@@ -151,17 +161,17 @@ describe("warehouse and location API routes", () => {
     it("returns a warehouse by UUID", async () => {
       const response = await getWarehouse(request("GET"), context(warehouseId));
       expect(response.status).toBe(200);
-      expect(service.getById).toHaveBeenCalledWith(warehouseId);
+      expect(mockService.getById).toHaveBeenCalledWith(warehouseId);
     });
 
     it("returns 400 for malformed UUID", async () => {
       const response = await getWarehouse(request("GET"), context("not-a-uuid"));
       expect(response.status).toBe(400);
-      expect(service.getById).not.toHaveBeenCalled();
+      expect(mockService.getById).not.toHaveBeenCalled();
     });
 
     it("returns 404 when the warehouse does not exist", async () => {
-      service.getById.mockRejectedValueOnce(new NotFoundError("Warehouse not found"));
+      mockService.getById.mockRejectedValueOnce(new NotFoundError("Warehouse not found"));
       const response = await getWarehouse(request("GET"), context(missingId));
       expect(response.status).toBe(404);
     });
@@ -174,7 +184,7 @@ describe("warehouse and location API routes", () => {
         address: "Updated Address",
       }), context(warehouseId));
       expect(response.status).toBe(200);
-      expect(service.update).toHaveBeenCalledWith(warehouseId, {
+      expect(mockService.update).toHaveBeenCalledWith(warehouseId, {
         name: "North Hub",
         address: "Updated Address",
       });
@@ -188,7 +198,7 @@ describe("warehouse and location API routes", () => {
     ])("returns 400 for %s", async (body, _label) => {
       const response = await updateWarehouse(request("PATCH", body), context(warehouseId));
       expect(response.status).toBe(400);
-      expect(service.update).not.toHaveBeenCalled();
+      expect(mockService.update).not.toHaveBeenCalled();
     });
 
     it("returns 400 for malformed JSON", async () => {
@@ -197,7 +207,7 @@ describe("warehouse and location API routes", () => {
     });
 
     it("returns 404 for an unknown warehouse", async () => {
-      service.update.mockRejectedValueOnce(new NotFoundError("Warehouse not found"));
+      mockService.update.mockRejectedValueOnce(new NotFoundError("Warehouse not found"));
       const response = await updateWarehouse(request("PATCH", { name: "Missing" }), context(missingId));
       expect(response.status).toBe(404);
     });
@@ -208,11 +218,11 @@ describe("warehouse and location API routes", () => {
       const response = await listLocations(request("GET"), context(warehouseId));
       expect(response.status).toBe(200);
       expect(await json(response)).toEqual({ success: true, data: [sampleLocation] });
-      expect(service.listLocationsByWarehouse).toHaveBeenCalledWith(warehouseId);
+      expect(mockService.listLocationsByWarehouse).toHaveBeenCalledWith(warehouseId);
     });
 
     it("returns an empty list when the warehouse has no locations", async () => {
-      service.listLocationsByWarehouse.mockResolvedValueOnce([]);
+      mockService.listLocationsByWarehouse.mockResolvedValueOnce([]);
       const response = await listLocations(request("GET"), context(secondWarehouseId));
       expect(response.status).toBe(200);
       expect((await json(response)).data).toEqual([]);
@@ -221,11 +231,11 @@ describe("warehouse and location API routes", () => {
     it("returns 400 for an invalid warehouse UUID", async () => {
       const response = await listLocations(request("GET"), context("bad-id"));
       expect(response.status).toBe(400);
-      expect(service.listLocationsByWarehouse).not.toHaveBeenCalled();
+      expect(mockService.listLocationsByWarehouse).not.toHaveBeenCalled();
     });
 
     it("returns 404 for an unknown warehouse", async () => {
-      service.listLocationsByWarehouse.mockRejectedValueOnce(new NotFoundError("Warehouse not found"));
+      mockService.listLocationsByWarehouse.mockRejectedValueOnce(new NotFoundError("Warehouse not found"));
       const response = await listLocations(request("GET"), context(missingId));
       expect(response.status).toBe(404);
     });
@@ -238,7 +248,7 @@ describe("warehouse and location API routes", () => {
         code: "PRODUCTION-RACK",
       }), context(warehouseId));
       expect(response.status).toBe(201);
-      expect(service.createLocation).toHaveBeenCalledWith(warehouseId, {
+      expect(mockService.createLocation).toHaveBeenCalledWith(warehouseId, {
         name: "Production Rack",
         code: "PRODUCTION-RACK",
       });
@@ -255,7 +265,7 @@ describe("warehouse and location API routes", () => {
     ])("returns 400 for %s", async (body, _label) => {
       const response = await createLocation(request("POST", body), context(warehouseId));
       expect(response.status).toBe(400);
-      expect(service.createLocation).not.toHaveBeenCalled();
+      expect(mockService.createLocation).not.toHaveBeenCalled();
     });
 
     it("returns 400 for malformed JSON", async () => {
@@ -269,11 +279,11 @@ describe("warehouse and location API routes", () => {
         code: "RACK-A",
       }), context("bad-id"));
       expect(response.status).toBe(400);
-      expect(service.createLocation).not.toHaveBeenCalled();
+      expect(mockService.createLocation).not.toHaveBeenCalled();
     });
 
     it("returns 404 for an unknown warehouse", async () => {
-      service.createLocation.mockRejectedValueOnce(new NotFoundError("Warehouse not found"));
+      mockService.createLocation.mockRejectedValueOnce(new NotFoundError("Warehouse not found"));
       const response = await createLocation(request("POST", {
         name: "Rack A",
         code: "RACK-A",
@@ -282,7 +292,7 @@ describe("warehouse and location API routes", () => {
     });
 
     it("returns 409 for a duplicate code in the same warehouse", async () => {
-      service.createLocation.mockRejectedValueOnce(new ConflictError("Duplicate location code"));
+      mockService.createLocation.mockRejectedValueOnce(new ConflictError("Duplicate location code"));
       const response = await createLocation(request("POST", {
         name: "Duplicate Storage",
         code: "STORAGE",
@@ -295,17 +305,17 @@ describe("warehouse and location API routes", () => {
     it("returns a location by UUID", async () => {
       const response = await getLocation(request("GET"), context(locationId));
       expect(response.status).toBe(200);
-      expect(service.getLocationById).toHaveBeenCalledWith(locationId);
+      expect(mockService.getLocationById).toHaveBeenCalledWith(locationId);
     });
 
     it("returns 400 for an invalid location UUID", async () => {
       const response = await getLocation(request("GET"), context("bad-id"));
       expect(response.status).toBe(400);
-      expect(service.getLocationById).not.toHaveBeenCalled();
+      expect(mockService.getLocationById).not.toHaveBeenCalled();
     });
 
     it("returns 404 for an unknown location", async () => {
-      service.getLocationById.mockRejectedValueOnce(new NotFoundError("Location not found"));
+      mockService.getLocationById.mockRejectedValueOnce(new NotFoundError("Location not found"));
       const response = await getLocation(request("GET"), context(missingId));
       expect(response.status).toBe(404);
     });
@@ -317,7 +327,7 @@ describe("warehouse and location API routes", () => {
         name: "Production Rack Updated",
       }), context(locationId));
       expect(response.status).toBe(200);
-      expect(service.updateLocation).toHaveBeenCalledWith(locationId, {
+      expect(mockService.updateLocation).toHaveBeenCalledWith(locationId, {
         name: "Production Rack Updated",
       });
     });
@@ -330,7 +340,7 @@ describe("warehouse and location API routes", () => {
     ])("returns 400 for %s", async (body, _label) => {
       const response = await updateLocation(request("PATCH", body), context(locationId));
       expect(response.status).toBe(400);
-      expect(service.updateLocation).not.toHaveBeenCalled();
+      expect(mockService.updateLocation).not.toHaveBeenCalled();
     });
 
     it("returns 400 for malformed JSON", async () => {
@@ -339,7 +349,7 @@ describe("warehouse and location API routes", () => {
     });
 
     it("returns 404 for an unknown location", async () => {
-      service.updateLocation.mockRejectedValueOnce(new NotFoundError("Location not found"));
+      mockService.updateLocation.mockRejectedValueOnce(new NotFoundError("Location not found"));
       const response = await updateLocation(request("PATCH", { name: "Missing" }), context(missingId));
       expect(response.status).toBe(404);
     });

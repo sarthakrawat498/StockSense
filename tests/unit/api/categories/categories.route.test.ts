@@ -12,16 +12,17 @@ const sampleCategory: Category = {
 	updatedAt: "2026-09-26T00:00:00.000Z",
 };
 
-const service = {
-	list: jest.fn(),
-	create: jest.fn(),
-	getById: jest.fn(),
-	update: jest.fn(),
+var mockService: {
+	list: jest.Mock;
+	create: jest.Mock;
+	getById: jest.Mock;
+	update: jest.Mock;
 };
 
-jest.mock("@/modules/category", () => ({
-	CategoryService: jest.fn(() => service),
-}));
+jest.mock("@/modules/category", () => {
+	mockService = { list: jest.fn(), create: jest.fn(), getById: jest.fn(), update: jest.fn() };
+	return { CategoryService: jest.fn(() => mockService) };
+});
 
 import { GET as listCategories, POST as createCategory } from "@/app/api/categories/route";
 import { GET as getCategory, PATCH as updateCategory } from "@/app/api/categories/[id]/route";
@@ -44,10 +45,10 @@ async function json(response: Response) {
 describe("category API routes", () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
-		service.list.mockResolvedValue([sampleCategory]);
-		service.create.mockResolvedValue(sampleCategory);
-		service.getById.mockResolvedValue(sampleCategory);
-		service.update.mockResolvedValue(sampleCategory);
+		mockService.list.mockResolvedValue([sampleCategory]);
+		mockService.create.mockResolvedValue(sampleCategory);
+		mockService.getById.mockResolvedValue(sampleCategory);
+		mockService.update.mockResolvedValue(sampleCategory);
 	});
 
 	it("GET /api/categories returns categories", async () => {
@@ -57,7 +58,7 @@ describe("category API routes", () => {
 	});
 
 	it("GET /api/categories returns 500 on service failure", async () => {
-		service.list.mockRejectedValueOnce(new Error("database unavailable"));
+		mockService.list.mockRejectedValueOnce(new Error("database unavailable"));
 		const response = await listCategories();
 		expect(response.status).toBe(500);
 	});
@@ -65,7 +66,7 @@ describe("category API routes", () => {
 	it("POST /api/categories creates a category", async () => {
 		const response = await createCategory(request("POST", { name: "Packaging" }));
 		expect(response.status).toBe(201);
-		expect(service.create).toHaveBeenCalledWith({ name: "Packaging" });
+		expect(mockService.create).toHaveBeenCalledWith({ name: "Packaging" });
 	});
 
 	it.each([
@@ -78,7 +79,7 @@ describe("category API routes", () => {
 	])("POST rejects %s", async (body, _label) => {
 		const response = await createCategory(request("POST", body));
 		expect(response.status).toBe(400);
-		expect(service.create).not.toHaveBeenCalled();
+		expect(mockService.create).not.toHaveBeenCalled();
 	});
 
 	it("POST returns 400 for malformed JSON", async () => {
@@ -87,7 +88,7 @@ describe("category API routes", () => {
 	});
 
 	it("POST returns 409 for duplicate category name", async () => {
-		service.create.mockRejectedValueOnce(new ConflictError("Duplicate category"));
+		mockService.create.mockRejectedValueOnce(new ConflictError("Duplicate category"));
 		const response = await createCategory(request("POST", { name: "Electronics" }));
 		expect(response.status).toBe(409);
 	});
@@ -95,17 +96,17 @@ describe("category API routes", () => {
 	it("GET /api/categories/:id returns a category", async () => {
 		const response = await getCategory(request("GET"), context(categoryId));
 		expect(response.status).toBe(200);
-		expect(service.getById).toHaveBeenCalledWith(categoryId);
+		expect(mockService.getById).toHaveBeenCalledWith(categoryId);
 	});
 
 	it("GET /api/categories/:id rejects invalid UUID", async () => {
 		const response = await getCategory(request("GET"), context("not-a-uuid"));
 		expect(response.status).toBe(400);
-		expect(service.getById).not.toHaveBeenCalled();
+		expect(mockService.getById).not.toHaveBeenCalled();
 	});
 
 	it("GET /api/categories/:id returns 404 when missing", async () => {
-		service.getById.mockRejectedValueOnce(new NotFoundError("Category not found"));
+		mockService.getById.mockRejectedValueOnce(new NotFoundError("Category not found"));
 		const response = await getCategory(request("GET"), context(missingId));
 		expect(response.status).toBe(404);
 	});
@@ -113,7 +114,7 @@ describe("category API routes", () => {
 	it("PATCH /api/categories/:id updates the name", async () => {
 		const response = await updateCategory(request("PATCH", { name: "Consumables" }), context(categoryId));
 		expect(response.status).toBe(200);
-		expect(service.update).toHaveBeenCalledWith(categoryId, { name: "Consumables" });
+		expect(mockService.update).toHaveBeenCalledWith(categoryId, { name: "Consumables" });
 	});
 
 	it.each([
@@ -125,7 +126,7 @@ describe("category API routes", () => {
 	])("PATCH rejects %s", async (body, _label) => {
 		const response = await updateCategory(request("PATCH", body), context(categoryId));
 		expect(response.status).toBe(400);
-		expect(service.update).not.toHaveBeenCalled();
+		expect(mockService.update).not.toHaveBeenCalled();
 	});
 
 	it("PATCH returns 400 for malformed JSON", async () => {
@@ -134,13 +135,13 @@ describe("category API routes", () => {
 	});
 
 	it("PATCH returns 404 when category is missing", async () => {
-		service.update.mockRejectedValueOnce(new NotFoundError("Category not found"));
+		mockService.update.mockRejectedValueOnce(new NotFoundError("Category not found"));
 		const response = await updateCategory(request("PATCH", { name: "Missing" }), context(missingId));
 		expect(response.status).toBe(404);
 	});
 
 	it("PATCH returns 409 for duplicate category name", async () => {
-		service.update.mockRejectedValueOnce(new ConflictError("Duplicate category"));
+		mockService.update.mockRejectedValueOnce(new ConflictError("Duplicate category"));
 		const response = await updateCategory(request("PATCH", { name: "Packaging" }), context(categoryId));
 		expect(response.status).toBe(409);
 	});
