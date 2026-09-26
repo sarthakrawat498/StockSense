@@ -11,7 +11,6 @@ export const API = {
     REFRESH: "/api/auth/refresh",
     RESET_PASSWORD_REQUEST: "/api/auth/reset-password/request",
     RESET_PASSWORD_CONFIRM: "/api/auth/reset-password/confirm",
-    ME: "/api/auth/me",
   },
 
   // ── Users ─────────────────────────────────────────────────────────────────

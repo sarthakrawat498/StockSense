@@ -6,7 +6,6 @@ import { Toaster } from "sonner";
 import { QueryProvider } from "./query-provider";
 
 import { AuthProvider } from "./auth-provider";
-import { QueryProvider } from "./query-provider";
 
 /**
  * Composes all global providers.

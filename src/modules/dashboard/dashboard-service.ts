@@ -9,7 +9,7 @@ export interface DashboardData {
 const numeric = (value: { toString(): string } | number) => Number(value.toString());
 
 export class DashboardService {
-	async getDashboard(): Promise<DashboardData> {
+	private async getLowStockAlerts(): Promise<DashboardAlert[]> {
 		const products = await prisma.product.findMany({
 			select: {
 				id: true,
@@ -22,7 +22,7 @@ export class DashboardService {
 			orderBy: { name: "asc" },
 		});
 
-		const alerts = products.reduce<DashboardAlert[]>((result, product) => {
+		return products.reduce<DashboardAlert[]>((result, product) => {
 				const currentStock = product.stockBalances.reduce((sum, balance) => sum + numeric(balance.onHandQty), 0);
 				const reorderPoint = numeric(product.reorderPoint);
 				const rule = product.reorderRule?.isActive ? product.reorderRule : undefined;
@@ -63,6 +63,31 @@ export class DashboardService {
 				scheduledTransfers,
 			},
 			alerts,
+	}
+
+	async getDashboard(): Promise<DashboardData> {
+		const [alerts, pendingReceipts, pendingDeliveries, scheduledTransfers, totalProducts] = await Promise.all([
+			this.getLowStockAlerts(),
+			prisma.inventoryOperation.count({ where: { type: "RECEIPT", status: { in: ["DRAFT", "WAITING", "READY"] } } }),
+			prisma.inventoryOperation.count({ where: { type: "DELIVERY", status: { in: ["DRAFT", "WAITING", "READY"] } } }),
+			prisma.inventoryOperation.count({ where: { type: "TRANSFER", status: { in: ["DRAFT", "WAITING", "READY"] }, scheduledDate: { not: null } } }),
+			prisma.product.count(),
+		]);
+
+		return {
+			kpis: {
+				totalProducts,
+				lowStockCount: alerts.length,
+				outOfStockCount: alerts.filter((alert) => alert.isOutOfStock).length,
+				pendingReceipts,
+				pendingDeliveries,
+				scheduledTransfers,
+			},
+			alerts,
 		};
+	}
+
+	async getLowStock(): Promise<DashboardAlert[]> {
+		return this.getLowStockAlerts();
 	}
 }
