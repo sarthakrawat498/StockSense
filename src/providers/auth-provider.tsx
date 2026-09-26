@@ -54,12 +54,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = async () => {
-    try {
-      await authClient.logout();
-    } finally {
-      setUser(null);
-      router.push(ROUTES.LOGIN);
-    }
+    // Clear local state and redirect instantly — don't wait for the API
+    setUser(null);
+    router.push(ROUTES.LOGIN);
+    // Fire-and-forget: clear httpOnly cookies on the server
+    authClient.logout().catch(() => {});
   };
 
   return (

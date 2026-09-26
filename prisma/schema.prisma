@@ -44,6 +44,8 @@ model User {
   username     String   @unique @db.VarChar(80)
   email        String   @unique @db.VarChar(255)
   passwordHash String   @map("password_hash")
+  firstName    String?  @map("first_name") @db.VarChar(80)
+  lastName     String?  @map("last_name") @db.VarChar(80)
   role         UserRole @default(STAFF)
   warehouseId  String?  @map("warehouse_id") @db.Uuid
   createdAt    DateTime @default(now()) @map("created_at")

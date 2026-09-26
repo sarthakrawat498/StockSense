@@ -5,6 +5,8 @@ export interface CreateUserData {
   username: string;
   email: string;
   passwordHash: string;
+  firstName?: string | null;
+  lastName?: string | null;
   role: UserRole;
   warehouseId?: string | null;
 }
@@ -15,6 +17,8 @@ export async function createUser(data: CreateUserData) {
       username: data.username,
       email: data.email.toLowerCase(),
       passwordHash: data.passwordHash,
+      firstName: data.firstName ?? null,
+      lastName: data.lastName ?? null,
       role: data.role,
       warehouseId: data.warehouseId ?? null,
     },
