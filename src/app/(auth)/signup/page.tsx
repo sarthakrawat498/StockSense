@@ -27,7 +27,6 @@ export default function SignupPage() {
 
   function onSubmit(values: SignupFormValues) {
     // TODO: wire to auth service
-    console.warn("signup", values);
   }
 
   return (

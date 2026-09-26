@@ -27,7 +27,6 @@ export default function LoginPage() {
 
   function onSubmit(values: LoginFormValues) {
     // TODO: wire to auth service
-    console.warn("login", values);
   }
 
   return (

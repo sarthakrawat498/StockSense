@@ -29,7 +29,6 @@ export default function ForgotPasswordPage() {
 
   function onSubmit(values: ForgotPasswordFormValues) {
     // TODO: wire to auth service
-    console.warn("forgot-password", values);
   }
 
   return (
