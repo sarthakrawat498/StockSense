@@ -11,7 +11,6 @@ export const API = {
     REFRESH: "/api/auth/refresh",
     RESET_PASSWORD_REQUEST: "/api/auth/reset-password/request",
     RESET_PASSWORD_CONFIRM: "/api/auth/reset-password/confirm",
-    ME: "/api/auth/me",
   },
 
   // ── Users ─────────────────────────────────────────────────────────────────
@@ -50,29 +49,25 @@ export const API = {
   RECEIPTS: {
     BASE: "/api/operations/receipts",
     BY_ID: (id: string) => `/api/operations/receipts/${id}`,
-    CONFIRM: (id: string) => `/api/operations/receipts/${id}/confirm`,
-    CANCEL: (id: string) => `/api/operations/receipts/${id}/cancel`,
+    VALIDATE: (id: string) => `/api/operations/receipts/${id}/validate`,
   },
 
   DELIVERIES: {
     BASE: "/api/operations/deliveries",
     BY_ID: (id: string) => `/api/operations/deliveries/${id}`,
-    CONFIRM: (id: string) => `/api/operations/deliveries/${id}/confirm`,
-    CANCEL: (id: string) => `/api/operations/deliveries/${id}/cancel`,
+    VALIDATE: (id: string) => `/api/operations/deliveries/${id}/validate`,
   },
 
   TRANSFERS: {
     BASE: "/api/operations/transfers",
     BY_ID: (id: string) => `/api/operations/transfers/${id}`,
-    CONFIRM: (id: string) => `/api/operations/transfers/${id}/confirm`,
-    CANCEL: (id: string) => `/api/operations/transfers/${id}/cancel`,
+    VALIDATE: (id: string) => `/api/operations/transfers/${id}/validate`,
   },
 
   ADJUSTMENTS: {
     BASE: "/api/operations/adjustments",
     BY_ID: (id: string) => `/api/operations/adjustments/${id}`,
-    CONFIRM: (id: string) => `/api/operations/adjustments/${id}/confirm`,
-    CANCEL: (id: string) => `/api/operations/adjustments/${id}/cancel`,
+    VALIDATE: (id: string) => `/api/operations/adjustments/${id}/validate`,
   },
 
   // ── Warehouses ────────────────────────────────────────────────────────────
@@ -80,6 +75,10 @@ export const API = {
     BASE: "/api/warehouses",
     BY_ID: (id: string) => `/api/warehouses/${id}`,
     LOCATIONS: (id: string) => `/api/warehouses/${id}/locations`,
+  },
+
+  LOCATIONS: {
+    BY_ID: (id: string) => `/api/locations/${id}`,
   },
 
   // ── Stock Ledger ─────────────────────────────────────────────────────────
