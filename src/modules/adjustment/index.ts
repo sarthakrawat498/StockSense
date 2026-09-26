@@ -1,8 +1,6 @@
 export { AdjustmentService } from "./adjustment-service";
 export type {
-  Adjustment,
-  AdjustmentLine,
-  CreateAdjustmentParams,
-  UpdateAdjustmentParams,
+  CreateAdjustmentInput,
+  UpdateAdjustmentInput,
   AdjustmentFilters,
 } from "./types";

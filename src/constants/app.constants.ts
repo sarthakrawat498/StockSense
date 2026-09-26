@@ -22,10 +22,11 @@ export const APP = {
     ISO: "yyyy-MM-dd",
   },
 
+  /** Used as infix in operation references: {warehouseCode}/{prefix}/{seq} */
   OPERATION_REFERENCE_PREFIXES: {
-    RECEIPT: "REC",
-    DELIVERY: "DEL",
-    TRANSFER: "INT",
+    RECEIPT: "IN",
+    DELIVERY: "OUT",
+    TRANSFER: "TR",
     ADJUSTMENT: "ADJ",
   },
 } as const;
