@@ -1,4 +1,4 @@
-import type { StockMoveType, OperationType, Timestamps } from "@/types/common.types";
+import type { StockMoveType, OperationType } from "@/types/common.types";
 
 export interface StockMove {
   id: string;
