@@ -74,6 +74,8 @@ export const authService = {
       username,
       email,
       passwordHash,
+      firstName: params.firstName?.trim() || null,
+      lastName: params.lastName?.trim() || null,
       role,
       warehouseId: params.warehouseId ?? null,
     });
