@@ -1,2 +1,2 @@
-// TODO: Internal transfers list page
-export default function TransfersPage() {}
+import { OperationListPage } from "@/features/operations/shared/operation-list-page";
+export default function Page() { return <OperationListPage type="TRANSFER" />; }

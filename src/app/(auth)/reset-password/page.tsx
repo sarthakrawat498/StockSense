@@ -29,7 +29,6 @@ export default function ResetPasswordPage() {
 
   function onSubmit(values: ResetPasswordFormValues) {
     // TODO: wire to auth service with OTP token from query params
-    console.warn("reset-password", values);
   }
 
   return (
