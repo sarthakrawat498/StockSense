@@ -2,6 +2,7 @@
 
 import { ThemeProvider } from "next-themes";
 import { Toaster } from "sonner";
+import { QueryProvider } from "./query-provider";
 import { AuthProvider } from "./auth-provider";
 
 /**

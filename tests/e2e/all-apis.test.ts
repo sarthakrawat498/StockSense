@@ -45,6 +45,7 @@ import {
 // Stock & Dashboard
 import { GET as getStock } from "@/app/api/stock/route";
 import { GET as getDashboard } from "@/app/api/dashboard/route";
+import { GET as getLowStockAlerts } from "@/app/api/alerts/low-stock/route";
 
 // Operations
 import { GET as listReceipts, POST as createReceipt } from "@/app/api/operations/receipts/route";
@@ -981,17 +982,24 @@ describe("StockSense Consolidated End-to-End API Integration Suite", () => {
   // 12. Dashboard Analytics & Summary API
   // ═══════════════════════════════════════════════════════════════════════════
   describe("12. Dashboard Analytics & Summary API", () => {
-    it("GET /api/dashboard - should return KPIs, operation counts, and alerts", async () => {
-      const res = await getDashboard();
+    it("GET /api/dashboard - should return KPIs and operation counts", async () => {
+      const res = await getDashboard(new Request("http://localhost:3000/api/dashboard"));
       expect(res.status).toBe(200);
 
       const json = await res.json();
       expect(json.success).toBe(true);
-      expect(json.data.kpis).toBeDefined();
-      expect(typeof json.data.kpis.totalProducts).toBe("number");
-      expect(typeof json.data.kpis.lowStockCount).toBe("number");
-      expect(typeof json.data.kpis.pendingReceipts).toBe("number");
-      expect(Array.isArray(json.data.alerts)).toBe(true);
+      expect(typeof json.data.totalProductsInStock).toBe("number");
+      expect(typeof json.data.lowStockItems).toBe("number");
+      expect(typeof json.data.pendingReceipts).toBe("number");
+    });
+
+    it("GET /api/alerts/low-stock - should return low stock alerts list", async () => {
+      const res = await getLowStockAlerts();
+      expect(res.status).toBe(200);
+
+      const json = await res.json();
+      expect(json.success).toBe(true);
+      expect(Array.isArray(json.data)).toBe(true);
     });
   });
 });
