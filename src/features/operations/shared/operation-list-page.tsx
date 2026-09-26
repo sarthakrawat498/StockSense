@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useState } from "react";
 import { Plus, Search, FileText } from "lucide-react";
 
-import { AppShell } from "@/components/layouts/app-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -25,7 +24,7 @@ import {
 import { StatusBadge, STATUS_OPTIONS } from "./status-badge";
 import { OPERATION_CONFIG } from "./operation-config";
 import { MOCK_OPERATIONS } from "./mock-data";
-import type { OperationType, OperationStatus } from "@/types/common.types";
+import type { OperationType } from "@/types/common.types";
 
 interface OperationListPageProps {
   type: OperationType;
@@ -51,8 +50,7 @@ export function OperationListPage({ type }: OperationListPageProps) {
   });
 
   return (
-    <AppShell pageTitle={config.title}>
-      <div className="space-y-5 max-w-[1200px]">
+    <div className="space-y-5 max-w-[1200px]">
 
         {/* Page header */}
         <div className="flex items-center justify-between">
@@ -172,6 +170,5 @@ export function OperationListPage({ type }: OperationListPageProps) {
         </div>
 
       </div>
-    </AppShell>
   );
 }
