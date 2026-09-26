@@ -12,7 +12,6 @@ import {
   TrendingUp,
 } from "lucide-react";
 
-import { AppShell } from "@/components/layouts/app-shell";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 
@@ -210,8 +209,7 @@ function StatusCell({ status }: { status: RecentOperation["status"] }) {
 
 export default function DashboardPage() {
   return (
-    <AppShell pageTitle="Dashboard">
-      <div className="space-y-7 max-w-[1200px]">
+    <div className="space-y-7 max-w-[1200px]">
 
         {/* Welcome banner */}
         <div className="glass-card rounded-xl px-6 py-5 flex items-center justify-between">
@@ -302,6 +300,5 @@ export default function DashboardPage() {
         </section>
 
       </div>
-    </AppShell>
   );
 }

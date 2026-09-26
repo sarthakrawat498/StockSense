@@ -1,10 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, CheckCircle2, AlertTriangle, XCircle } from "lucide-react";
+import { ArrowLeft, CheckCircle2, XCircle } from "lucide-react";
 
-import { AppShell } from "@/components/layouts/app-shell";
-import { Button } from "@/components/ui/button";
+import { AppShell } from "@/components/layouts/app-shell";import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
   Table,
@@ -81,11 +80,9 @@ export function OperationDetailPage({ type, id }: OperationDetailPageProps) {
 
   if (!operation) {
     return (
-      <AppShell pageTitle={config.singular}>
-        <div className="flex items-center justify-center py-24 text-muted-foreground text-sm">
-          Operation not found.
-        </div>
-      </AppShell>
+      <div className="flex items-center justify-center py-24 text-muted-foreground text-sm">
+        Operation not found.
+      </div>
     );
   }
 
@@ -95,8 +92,7 @@ export function OperationDetailPage({ type, id }: OperationDetailPageProps) {
   const isAdjustment = type === "ADJUSTMENT";
 
   return (
-    <AppShell pageTitle={operation.reference}>
-      <div className="space-y-5 max-w-[1100px]">
+    <div className="space-y-5 max-w-[1100px]">
 
         {/* Top bar */}
         <div className="flex flex-wrap items-center justify-between gap-4">
@@ -251,6 +247,5 @@ export function OperationDetailPage({ type, id }: OperationDetailPageProps) {
         </div>
 
       </div>
-    </AppShell>
   );
 }
