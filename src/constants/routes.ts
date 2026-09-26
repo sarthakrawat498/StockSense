@@ -52,4 +52,7 @@ export const ROUTES = {
   WAREHOUSES: "/warehouses",
   WAREHOUSES_NEW: "/warehouses/new",
   WAREHOUSE_DETAIL: (id: string) => `/warehouses/${id}`,
+
+  // ── Team (MANAGER only) ───────────────────────────────────────────────────
+  TEAM: "/team",
 } as const;
