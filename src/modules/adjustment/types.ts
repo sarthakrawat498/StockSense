@@ -6,11 +6,11 @@ export interface CreateAdjustmentInput {
   warehouseId: string;
   /** The location being adjusted */
   toLocationId: string;
-  responsibleUserId: string;
+  responsibleUserId?: string;
   items: Array<{
     productId: string;
-    /** Recorded/theoretical quantity (what the system thinks is there) */
-    quantity: number;
+    /** Recorded/theoretical quantity (defaults to current stock if omitted) */
+    quantity?: number;
     /** Physical count (what is actually there) */
     countedQuantity: number;
   }>;

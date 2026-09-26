@@ -4,6 +4,12 @@ node_modules/
 .pnp.js
 design.svg
 CONTEXT*.md
+context/
+.agents/
+.github/
+.swc/
+skills-lock.json
+PR_DESCRIPTION.md
 
 # ─── Next.js ─────────────────────────────────────────────────────────────────
 .next/

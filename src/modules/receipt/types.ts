@@ -8,7 +8,7 @@ export interface CreateReceiptInput {
   contactName?: string;
   address?: string;
   scheduledDate?: string;
-  responsibleUserId: string;
+  responsibleUserId?: string;
   items: Array<{ productId: string; quantity: number }>;
 }
 

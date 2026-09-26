@@ -7,7 +7,7 @@ export interface CreateTransferInput {
   fromLocationId: string;
   toLocationId: string;
   scheduledDate?: string;
-  responsibleUserId: string;
+  responsibleUserId?: string;
   items: Array<{ productId: string; quantity: number }>;
 }
 
