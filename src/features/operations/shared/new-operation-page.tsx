@@ -115,7 +115,7 @@ export function NewOperationPage({ type }: NewOperationPageProps) {
   }
 
   return (
-    <div className="space-y-5 max-w-[860px]">
+    <div className="mx-auto w-full max-w-[860px] space-y-5">
 
         {/* Page header */}
         <div className="flex items-center gap-3">
