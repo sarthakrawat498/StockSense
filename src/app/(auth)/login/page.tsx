@@ -1,15 +1,18 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { BarChart3 } from "lucide-react";
+import { BarChart3, ShieldCheck } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import {
   Form, FormControl, FormField, FormItem, FormLabel, FormMessage,
 } from "@/components/ui/form";
@@ -20,6 +23,7 @@ import { ROUTES } from "@/constants/routes";
 export default function LoginPage() {
   const router = useRouter();
   const { login } = useAuth();
+  const [isManagerLogin, setIsManagerLogin] = useState(false);
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -28,7 +32,15 @@ export default function LoginPage() {
 
   async function onSubmit(values: LoginFormValues) {
     try {
-      await login(values);
+      const user = await login(values);
+
+      // Role guard — if manager toggle is checked, ensure the account is MANAGER
+      if (isManagerLogin && user.role !== "MANAGER") {
+        toast.error("Access denied. This account does not have manager privileges.");
+        fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
+        return;
+      }
+
       router.push(ROUTES.DASHBOARD);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Invalid credentials");
@@ -75,6 +87,29 @@ export default function LoginPage() {
               <FormMessage className="text-xs" />
             </FormItem>
           )} />
+
+          {/* Manager toggle */}
+          <div
+            className={`flex items-center gap-3 rounded-lg border px-3.5 py-3 cursor-pointer transition-colors ${
+              isManagerLogin
+                ? "border-violet-500/40 bg-violet-500/5"
+                : "border-border hover:border-muted-foreground/30"
+            }`}
+            onClick={() => setIsManagerLogin((v) => !v)}
+          >
+            <Checkbox
+              id="manager-login"
+              checked={isManagerLogin}
+              onCheckedChange={(v) => setIsManagerLogin(!!v)}
+              className="data-[state=checked]:bg-violet-500 data-[state=checked]:border-violet-500"
+            />
+            <div className="flex items-center gap-2">
+              <ShieldCheck className={`h-4 w-4 ${isManagerLogin ? "text-violet-500" : "text-muted-foreground"}`} />
+              <Label htmlFor="manager-login" className="text-sm cursor-pointer select-none">
+                Sign in as Manager
+              </Label>
+            </div>
+          </div>
 
           <Button type="submit" className="w-full h-10 font-medium" disabled={form.formState.isSubmitting}>
             {form.formState.isSubmitting ? "Signing in…" : "Sign In"}

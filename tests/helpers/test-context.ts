@@ -10,12 +10,52 @@ export interface TestContext {
   productName: string;
 }
 
-export function createJsonRequest(url: string, method: string, body?: unknown) {
-  return new NextRequest(new URL(url, "http://localhost:3000"), {
+export interface RequestOptions {
+  token?: string;
+  refreshToken?: string;
+  headers?: Record<string, string>;
+  cookies?: Record<string, string>;
+}
+
+export function createJsonRequest(
+  url: string,
+  method: string,
+  body?: unknown,
+  options?: RequestOptions
+) {
+  const headers: Record<string, string> = {
+    ...(options?.headers ?? {}),
+  };
+  if (body !== undefined) {
+    headers["Content-Type"] = "application/json";
+  }
+  if (options?.token) {
+    headers["Authorization"] = `Bearer ${options.token}`;
+  }
+
+  const req = new NextRequest(new URL(url, "http://localhost:3000"), {
     method,
-    headers: { "Content-Type": "application/json" },
-    body: body !== undefined ? JSON.stringify(body) : undefined,
+    headers,
+    body: body !== undefined ? (typeof body === "string" ? body : JSON.stringify(body)) : undefined,
   });
+
+  if (options?.token) {
+    req.cookies.set("access_token", options.token);
+  }
+  if (options?.refreshToken) {
+    req.cookies.set("refresh_token", options.refreshToken);
+  }
+  if (options?.cookies) {
+    for (const [k, v] of Object.entries(options.cookies)) {
+      req.cookies.set(k, v);
+    }
+  }
+
+  return req;
+}
+
+export function routeContext(id: string): { params: Promise<{ id: string }> } {
+  return { params: Promise.resolve({ id }) };
 }
 
 export async function getTestContext(): Promise<TestContext> {

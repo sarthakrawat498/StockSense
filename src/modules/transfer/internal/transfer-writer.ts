@@ -23,6 +23,12 @@ export class TransferWriter {
 
     const reference = await ReferenceGenerator.generate(warehouse.code, "TRANSFER");
 
+    let responsibleUserId = input.responsibleUserId;
+    if (!responsibleUserId) {
+      const defaultUser = await prisma.user.findFirst();
+      responsibleUserId = defaultUser?.id ?? "00000000-0000-0000-0000-000000000000";
+    }
+
     return prisma.inventoryOperation.create({
       data: {
         reference,
@@ -34,7 +40,7 @@ export class TransferWriter {
         scheduledDate: input.scheduledDate
           ? new Date(input.scheduledDate)
           : undefined,
-        responsibleUserId: input.responsibleUserId,
+        responsibleUserId,
         items: {
           create: input.items.map((item) => ({
             productId: item.productId,

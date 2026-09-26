@@ -13,49 +13,51 @@ import {
   ArrowRightLeft,
   ClipboardEdit,
   BarChart3,
+  Users,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { ROUTES } from "@/constants/routes";
 import { Separator } from "@/components/ui/separator";
-
-// ─── Nav structure ────────────────────────────────────────────────────────────
-
-const NAV = [
-  {
-    items: [
-      { label: "Dashboard", href: ROUTES.DASHBOARD, icon: LayoutDashboard },
-    ],
-  },
-  {
-    section: "Operations",
-    items: [
-      { label: "Receipts",    href: ROUTES.RECEIPTS,    icon: PackagePlus },
-      { label: "Deliveries",  href: ROUTES.DELIVERIES,  icon: PackageMinus },
-      { label: "Transfers",   href: ROUTES.TRANSFERS,   icon: ArrowRightLeft },
-      { label: "Adjustments", href: ROUTES.ADJUSTMENTS, icon: ClipboardEdit },
-    ],
-  },
-  {
-    section: "Inventory",
-    items: [
-      { label: "Products",     href: ROUTES.PRODUCTS,     icon: Package },
-      { label: "Warehouses",   href: ROUTES.WAREHOUSES,   icon: Warehouse },
-      { label: "Move History", href: ROUTES.MOVE_HISTORY, icon: History },
-    ],
-  },
-  {
-    section: "System",
-    items: [
-      { label: "Settings", href: ROUTES.SETTINGS, icon: Settings },
-    ],
-  },
-];
-
-// ─── Component ────────────────────────────────────────────────────────────────
+import { useAuth } from "@/providers/auth-provider";
 
 export function Sidebar() {
   const pathname = usePathname();
+  const { user } = useAuth();
+  const isManager = user?.role === "MANAGER";
+
+  const NAV = [
+    {
+      items: [
+        { label: "Dashboard", href: ROUTES.DASHBOARD, icon: LayoutDashboard },
+      ],
+    },
+    {
+      section: "Operations",
+      items: [
+        { label: "Receipts",    href: ROUTES.RECEIPTS,    icon: PackagePlus },
+        { label: "Deliveries",  href: ROUTES.DELIVERIES,  icon: PackageMinus },
+        { label: "Transfers",   href: ROUTES.TRANSFERS,   icon: ArrowRightLeft },
+        { label: "Adjustments", href: ROUTES.ADJUSTMENTS, icon: ClipboardEdit },
+      ],
+    },
+    {
+      section: "Inventory",
+      items: [
+        { label: "Products",     href: ROUTES.PRODUCTS,     icon: Package },
+        { label: "Warehouses",   href: ROUTES.WAREHOUSES,   icon: Warehouse },
+        { label: "Move History", href: ROUTES.MOVE_HISTORY, icon: History },
+      ],
+    },
+    {
+      section: "System",
+      items: [
+        { label: "Settings", href: ROUTES.SETTINGS, icon: Settings },
+        // Team tab — MANAGER only
+        ...(isManager ? [{ label: "Team", href: ROUTES.TEAM, icon: Users }] : []),
+      ],
+    },
+  ];
 
   return (
     <aside className="flex h-screen w-[220px] flex-shrink-0 flex-col border-r bg-background dark:border-white/[0.07] dark:[background:rgba(10,10,10,0.75)] dark:[backdrop-filter:blur(16px)]">
@@ -101,9 +103,14 @@ export function Sidebar() {
       {/* Footer */}
       <div className="border-t px-3 py-3">
         <Separator className="mb-3" />
-        <p className="px-2 text-[11px] text-muted-foreground">
-          Odoo Hackathon 2026
-        </p>
+        <div className="px-2 flex items-center gap-2">
+          {isManager && (
+            <span className="text-[10px] font-semibold text-violet-500 dark:text-violet-400 bg-violet-500/10 rounded px-1.5 py-0.5">
+              Manager
+            </span>
+          )}
+          <p className="text-[11px] text-muted-foreground">Odoo Hackathon 2026</p>
+        </div>
       </div>
     </aside>
   );

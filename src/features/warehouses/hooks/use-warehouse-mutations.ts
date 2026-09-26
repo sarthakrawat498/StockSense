@@ -11,7 +11,12 @@ export function useWarehouseMutations() {
 	const createWarehouse = useMutation({ mutationFn: warehousesService.create, onSuccess: invalidate });
 	const updateWarehouse = useMutation({ mutationFn: ({ id, input }: { id: string; input: { name?: string; address?: string } }) => warehousesService.update(id, input), onSuccess: invalidate });
 	const createLocation = useMutation({ mutationFn: ({ warehouseId, input }: { warehouseId: string; input: { name: string; code: string } }) => warehousesService.createLocation(warehouseId, input), onSuccess: (_, variables) => { void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.warehouses.locations(variables.warehouseId) }); void invalidate(); } });
-	const updateLocation = useMutation({ mutationFn: ({ id, input }: { id: string; input: { name: string } }) => warehousesService.updateLocation(id, input) });
+	const updateLocation = useMutation({
+		mutationFn: ({ id, input }: { id: string; input: { name: string } }) => warehousesService.updateLocation(id, input),
+		onSuccess: () => {
+			void queryClient.invalidateQueries({ queryKey: ["warehouses"] });
+		},
+	});
 
 	return { createWarehouse, updateWarehouse, createLocation, updateLocation };
 }

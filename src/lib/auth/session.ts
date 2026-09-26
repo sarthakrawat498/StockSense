@@ -22,6 +22,8 @@ export async function getSessionUser(): Promise<AuthUser | null> {
       id: payload.sub,
       username: payload.username,
       email: payload.email,
+      firstName: null,
+      lastName: null,
       role: payload.role,
       warehouseId: payload.warehouseId ?? null,
     };
@@ -50,6 +52,8 @@ export async function getSessionUserFromRequest(
       id: payload.sub,
       username: payload.username,
       email: payload.email,
+      firstName: null,
+      lastName: null,
       role: payload.role,
       warehouseId: payload.warehouseId ?? null,
     };
