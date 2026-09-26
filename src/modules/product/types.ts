@@ -16,6 +16,7 @@ export interface Product extends Timestamps {
   uom: string;
   unitCost: string;
   reorderPoint: number;
+  effectiveThreshold?: number;
   /** Computed: total on-hand qty across all locations */
   totalStock?: number;
   /** Computed: true if totalStock <= reorderPoint */
@@ -44,9 +45,12 @@ export interface ProductStock {
 export interface ReorderRule {
   id: string;
   productId: string;
-  minQty: number;
-  maxQty: number;
+  product?: Pick<Product, "id" | "name" | "sku" | "uom">;
+  minQty: string;
+  maxQty: string;
   isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // ─── Request DTOs ─────────────────────────────────────────────────────────────

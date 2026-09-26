@@ -34,6 +34,11 @@ export const API = {
     UNITS: "/api/products/units",
   },
 
+  REORDER_RULES: {
+    BASE: "/api/reorder-rules",
+    BY_ID: (id: string) => `/api/reorder-rules/${id}`,
+  },
+
   // ── Categories ───────────────────────────────────────────────────────────
   CATEGORIES: {
     BASE: "/api/categories",
@@ -77,6 +82,9 @@ export const API = {
   },
 
   // ── Stock Ledger ─────────────────────────────────────────────────────────
+  STOCK: {
+    BASE: "/api/stock",
+  },
   STOCK_LEDGER: {
     BASE: "/api/stock-ledger",
   },

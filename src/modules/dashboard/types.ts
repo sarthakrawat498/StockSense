@@ -16,5 +16,7 @@ export interface DashboardAlert {
   sku: string;
   currentStock: number;
   reorderPoint: number;
+  effectiveThreshold: number;
+  suggestedQuantity?: number;
   isOutOfStock: boolean;
 }
